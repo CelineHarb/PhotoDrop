@@ -1,4 +1,59 @@
-﻿.welcome-container{
-    font: ariel;
-    color: black;
+﻿.welcome-container {
+    min-height: 40vh;
+    background: linear-gradient( 135deg, #F4B8C6 0%, #CBB8FF 40%, #8FAE9A 100% );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content h1 {
+    font-size: 4rem;
+    color: var(--sage-dark);
+    font-family: "Barrio", system-ui;
+    font-weight: 400;
+}
+/*Highlights*/
+.highlights{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-top:20px;
+}
+
+.highlight {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.2rem;
+    color: #2B2B2B;
+    margin-bottom: 15px;
+
+}
+.highlight i {
+    font-size:13px;
+    color: var(--sage-dark);
+}
+
+/*Button*/
+.cta-wrapper{
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-get-started {
+    padding: 14px 28px;
+    border-radius: 999px;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    color: var(--sage-dark);
+    border: 1px solid var(--sage);
+    margin-bottom: 2em;
+}
+
+.btn-get-started:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 35px rgba(203, 184, 255, 0.4);
 }

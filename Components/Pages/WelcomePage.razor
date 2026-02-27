@@ -1,11 +1,10 @@
 ﻿@page "/"
 
 <div class="welcome-container">
-    <h1>Welcome to DriveDrop!</h1>
-    <p>Upload and collect wedding photos easily with a simple QR code.</p>
-
+    <div class="content">
+        <h1>PhotoDrop</h1>
+    </div>
 </div>
-
 <section class="steps">
     <div class="steps-grid">
 
@@ -19,7 +18,7 @@
             </div>
 
             <h3>Create Your Event</h3>
-            <p>Name your event and generate a private upload link or QR code instantly</p>
+            <p>Name your event, connect to your google drive, and generate a QR code</p>
         </div>
 
         @* Step 2 *@
@@ -35,7 +34,7 @@
             <p>Guests scan the code and access your event upload page.</p>
         </div>
 
-       @*  Step 3 *@
+        @*  Step 3 *@
         <div class="step-card">
             <div class="step-header">
                 <span class="step-number">3</span>
@@ -49,7 +48,32 @@
         </div>
 
     </div>
+
+    <div class="cta-wrapper">
+        <a href="#" class="btn-get-started">
+            Get Started
+        </a>
+    </div>
 </section>
+
+<div class="highlights">
+    <span class="highlight">
+        <i class="fa-solid fa-image"></i>
+        Photos Only
+    </span>
+
+    <span class="highlight">
+        <i class="fa-solid fa-user-check"></i>
+        No Guest Login
+    </span>
+
+    <span class="highlight">
+        <i class="fa-solid fa-google-drive"></i>
+        Uploads to you Google Drive
+    </span>
+</div>
+
+
 
 @code {
 
