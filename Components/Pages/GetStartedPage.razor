@@ -1,0 +1,37 @@
+﻿@page "/GetStarted"
+@inject NavigationManager Nav
+
+<div class="get-started-page-container">
+    <header class="get-started-header">
+        <h1 class="get-started-title">Create Your Event</h1>
+        <p class="get-started-subtitle">Name it first — then connect Drive.</p>
+    </header>
+
+    <section class="get-started-card">
+        <label class="field-label">Event Name</label>
+        <input id="eventName"
+                class="text-input"
+                placeholder="Summer Party, Wedding"
+                @bind="EventName"
+                @bind:event="oninput"/>
+
+        <button class="btn-connect" disabled="@IsConnectDisabled" @onclick="ConnectDrive">
+            Connect Google Drive
+        </button>
+
+        <p class="helper-text">We'll only upload photos to an event folder in your Drive</p>
+    </section>
+</div>
+
+@code {
+    private string EventName = "";
+
+    private bool IsConnectDisabled =>
+        string.IsNullOrWhiteSpace(EventName) || EventName.Trim().Length < 3;
+
+    private void ConnectDrive()
+    {
+        var name = Uri.EscapeDataString(EventName.Trim());
+        Nav.NavigateTo($"/auth/google/start?eventName={name}", true);
+    }
+}
