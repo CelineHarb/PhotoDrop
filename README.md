@@ -29,6 +29,7 @@ Hosts create an event, connect their Google Drive, and receive a shareable QR co
 - HTML / CSS
 
 ### Backend
+- C#
 - ASP.NET Core
 - Google OAuth 2.0
 - Google Drive API
