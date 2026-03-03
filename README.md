@@ -45,3 +45,8 @@ Hosts create an event, connect their Google Drive, and receive a shareable QR co
 # Project Status
 PhotoDrop is currently under active development as part of building a production-ready event photo collection platform.
 Core OAuth integration is in progress. Additional features such as secure upload handling, QR generation, and production deployment are planned next.
+
+## Screenshots
+![Landing Page](Photos/PhotoDropWelcome.png)
+![Landing Page](Photos/PhotoDropWelcome2.png)
+![Event Setup](Photos/PhotoDropGetStarted.png)
