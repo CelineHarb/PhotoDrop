@@ -30,10 +30,10 @@
         box-shadow: 0 12px 28px rgba(22, 28, 45, .10);
         transform: translateY(-2px);
     }
-    .btn-connect:disabled {
+    /*.btn-connect:disabled {
         opacity: .55;
         cursor: not-allowed;
-    }
+    }*/
 
 .helper-text{
     margin: 10px 0 0;

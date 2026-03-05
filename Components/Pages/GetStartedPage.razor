@@ -1,4 +1,4 @@
-﻿@page "/GetStarted"
+﻿@page "/get-started"
 @inject NavigationManager Nav
 
 <div class="get-started-page-container">
@@ -15,7 +15,7 @@
                 @bind="EventName"
                 @bind:event="oninput"/>
 
-        <button class="btn-connect" disabled="@IsConnectDisabled" @onclick="ConnectDrive">
+        <button class="btn-connect" @onclick="ConnectDrive">
             Connect Google Drive
         </button>
 
@@ -32,6 +32,6 @@
     private void ConnectDrive()
     {
         var name = Uri.EscapeDataString(EventName.Trim());
-        Nav.NavigateTo($"/auth/google/start?eventName={name}", true);
+        Nav.NavigateTo($"/auth/google/start?eventName={name}", forceLoad: true);
     }
 }
