@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<PhotoDrop.Services.GoogleDriveService>();
 
 //Authentication + Google OAuth (store who is signed in)
 builder.Services.AddAuthentication( options =>
@@ -68,13 +69,32 @@ app.MapGet("/auth/google/start", (HttpContext ctx, string eventName) =>
     return Results.Challenge(props, new[] { GoogleDefaults.AuthenticationScheme }); // starts the google oauth flow
 });
 
-app.MapGet("/auth/google/finish", async (HttpContext ctx) =>
+app.MapGet("/auth/google/finish", async (HttpContext ctx, PhotoDrop.Services.GoogleDriveService driveSvc) =>
 {
     var accessToken = await ctx.GetTokenAsync("access_token");
     if (string.IsNullOrWhiteSpace(accessToken))
         return Results.Redirect("/get-started?error=missing_access_token");
 
-    return Results.Redirect("/get-started?connected=1");
+    //pull eventName we stored in endpoint
+    var authResult = await ctx.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+    string? eventName = null;
+
+    if (authResult.Properties?.Items != null &&
+        authResult.Properties.Items.ContainsKey("eventName"))
+    {
+        eventName = authResult.Properties.Items["eventName"];
+    }
+
+    if (string.IsNullOrWhiteSpace(eventName) || eventName.Trim().Length < 3)
+        return Results.Redirect("/get-started?error=missing_event_name");
+
+    var cleanedEventName = eventName.Trim();
+
+    var folderId = await driveSvc.CreateEventFolderAsync(accessToken, cleanedEventName);
+
+    // For now, showing it in query string so we can see it worked
+    return Results.Redirect($"/get-started?connected=1&folderId={folderId}");
 });
 
 app.MapRazorComponents<App>()

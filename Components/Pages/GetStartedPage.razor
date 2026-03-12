@@ -15,7 +15,7 @@
                 @bind="EventName"
                 @bind:event="oninput"/>
 
-        <button class="btn-connect" @onclick="ConnectDrive">
+        <button class="btn-connect" disabled="@IsConnectDisabled" @onclick="ConnectDrive">
             Connect Google Drive
         </button>
 
