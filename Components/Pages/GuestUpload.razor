@@ -1,0 +1,60 @@
+﻿@page "/e/{Token}"
+@inject PhotoDrop.Services.EventStorage EventStorage
+@using PhotoDrop.Models
+
+<div class="guest=page-container">
+    @if (eventRecord is null)
+    {
+        <div class="guest-card">
+            <h1 class="guest-title">Event not found</h1>
+            <p class="guest-text">This upload link may be invalid or expired.</p>
+        </div>
+    }
+    else
+    {
+        <div class="guest-card">
+            <h1 class="guest-title">@eventRecord.EventName</h1>
+            <p class="guest-text">Select photos to upload to this event.</p>
+
+            <div class="guest-upload-area">
+                <InputFile OnChange="HandleFilesSelected"
+                           multiple
+                           accept=".jpg,.jpeg,.png" />
+
+                @if (selectedFiles.Count > 0)
+                {
+                    <p class="file-count">@selectedFiles.Count photo(s) selected</p>
+
+                    <ul class="file-list">
+                        @foreach (var file in selectedFiles)
+                        {
+                            <li>@file.Name</li>
+                        }
+                    </ul>
+
+                    <button type="button" class="upload-btn">
+                        Upload Photos
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Token { get; set; } = "";
+
+    private EventRecord? eventRecord;
+    private List<IBrowserFile> selectedFiles = new();
+
+    protected override void OnInitialized()
+    {
+        eventRecord = EventStorage.GetByToken(Token);
+    }
+
+    private void HandleFilesSelected(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles().ToList();
+    }
+}

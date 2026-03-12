@@ -1,14 +1,16 @@
-using PhotoDrop.Components;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using PhotoDrop.Components;
+using PhotoDrop.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<PhotoDrop.Services.GoogleDriveService>();
+builder.Services.AddSingleton<GoogleDriveService>();
+builder.Services.AddSingleton<EventStorage>();
 
 //Authentication + Google OAuth (store who is signed in)
 builder.Services.AddAuthentication( options =>
@@ -69,7 +71,7 @@ app.MapGet("/auth/google/start", (HttpContext ctx, string eventName) =>
     return Results.Challenge(props, new[] { GoogleDefaults.AuthenticationScheme }); // starts the google oauth flow
 });
 
-app.MapGet("/auth/google/finish", async (HttpContext ctx, PhotoDrop.Services.GoogleDriveService driveSvc) =>
+app.MapGet("/auth/google/finish", async (HttpContext ctx, GoogleDriveService driveSvc, EventStorage eventStorage) =>
 {
     var accessToken = await ctx.GetTokenAsync("access_token");
     if (string.IsNullOrWhiteSpace(accessToken))
@@ -93,8 +95,44 @@ app.MapGet("/auth/google/finish", async (HttpContext ctx, PhotoDrop.Services.Goo
 
     var folderId = await driveSvc.CreateEventFolderAsync(accessToken, cleanedEventName);
 
+    var createdEvent = eventStorage.Add(cleanedEventName, folderId, accessToken);
+
     // For now, showing it in query string so we can see it worked
-    return Results.Redirect($"/get-started?connected=1&folderId={folderId}");
+    return Results.Redirect($"/get-started?connected=1&token={createdEvent.GuestToken}");
+});
+
+app.MapPost("/api/upload/{token}", async (
+    string token,
+    HttpRequest request,EventStorage eventStorage, GoogleDriveService driveSvc) =>
+{
+    var eventRecord = eventStorage.GetByToken(token);
+
+    if (eventRecord == null)
+        return Results.BadRequest("Invalid event token.");
+
+    if (!request.HasFormContentType)
+        return Results.BadRequest("Expected multipart form data.");
+
+    var form = await request.ReadFormAsync();
+    var files = form.Files;
+
+    if (files.Count == 0)
+        return Results.BadRequest("No files uploaded.");
+
+    foreach (var file in files)
+    {
+        using var stream = file.OpenReadStream();
+
+        await driveSvc.UploadPhotoAsync(
+            eventRecord.AccessToken,
+            eventRecord.FolderId,
+            stream,
+            file.FileName,
+            file.ContentType
+        );
+    }
+
+    return Results.Ok(new { uploaded = files.Count });
 });
 
 app.MapRazorComponents<App>()

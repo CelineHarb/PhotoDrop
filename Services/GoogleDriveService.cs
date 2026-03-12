@@ -1,7 +1,7 @@
 ﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
-using Google.Apis.Drive.v3.Data;
+using DriveFile = Google.Apis.Drive.v3.Data.File;
 
 
 namespace PhotoDrop.Services
@@ -29,6 +29,35 @@ namespace PhotoDrop.Services
 
             var created = await request.ExecuteAsync();
             return created.Id;
+        }
+
+        public async Task<string> UploadPhotoAsync(string accessToken, string folderId, Stream fileStream, string fileName, string contentType)
+        {
+            var credential = GoogleCredential.FromAccessToken(accessToken);
+
+            var drive = new DriveService(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "PhotoDrop"
+            });
+
+            var fileMetadata = new DriveFile
+            {
+                Name = fileName,
+                Parents = new List<string> { folderId }
+            };
+
+            var request = drive.Files.Create(fileMetadata, fileStream, contentType);
+            request.Fields = "id";
+
+            await request.UploadAsync();
+
+            if (request.ResponseBody == null || string.IsNullOrWhiteSpace(request.ResponseBody.Id))
+            {
+                throw new Exception("Google Drive upload failed.");
+            }
+
+            return request.ResponseBody.Id;
         }
     }
 }

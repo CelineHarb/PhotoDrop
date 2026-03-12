@@ -1,5 +1,6 @@
 ﻿@page "/get-started"
 @inject NavigationManager Nav
+@using Microsoft.AspNetCore.WebUtilities
 
 <div class="get-started-page-container">
     <header class="get-started-header">
@@ -20,14 +21,37 @@
         </button>
 
         <p class="helper-text">We'll only upload photos to an event folder in your Drive</p>
+
+        @if (!string.IsNullOrWhiteSpace(GuestToken))
+        {
+            <div class="success-card">
+                <p class="success-title"> Event created successfully!</p>
+                <p class="success-text"> Your guest upload link:@GuestLink</p>
+            </div>
+        }
     </section>
 </div>
 
 @code {
     private string EventName = "";
 
+    private string? GuestToken;
+
     private bool IsConnectDisabled =>
         string.IsNullOrWhiteSpace(EventName) || EventName.Trim().Length < 3;
+
+    private string GuestLink => $"{Nav.BaseUri}e/{GuestToken}";
+
+    protected override void OnInitialized()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("token", out var token))
+        {
+            GuestToken = token.ToString();
+        }
+    }
 
     private void ConnectDrive()
     {
