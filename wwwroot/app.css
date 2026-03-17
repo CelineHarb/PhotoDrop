@@ -1,5 +1,16 @@
 :root {
-    --sage: #8FAE9A;
+    --bg-primary: #0C0C0E;
+    --bg-card: #1A1916;
+    --gold: #C4A882;
+    --gold-muted: rgba(196, 168, 130, 0.3);
+    --coral: #D4775C;
+    --cream: #F5F0E8;
+    --text-muted: #A8A196;
+    --text-dim: #8B8577;
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    font-family: Georgia, 'Times New Roman', serif;
+    /*--sage: #8FAE9A;
     --sage-dark: #6E8D79;
     --pink: #F4B8C6;
     --lavender: #CBB8FF;
@@ -7,7 +18,7 @@
     --white: #FFFFFF;
     --text-dark: #2B2B2B;
     --text-muted: #6B7280;
-    font-family: Helvetica, sans-serif;
+    font-family: Helvetica, sans-serif;*/
 }
 /*===== Section Wrapper =======*/
 .steps {

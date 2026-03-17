@@ -1,5 +1,6 @@
 ﻿@page "/get-started"
 @inject NavigationManager Nav
+@inject PhotoDrop.Services.QrCodeService QrService
 @using Microsoft.AspNetCore.WebUtilities
 
 <div class="get-started-page-container">
@@ -26,7 +27,17 @@
         {
             <div class="success-card">
                 <p class="success-title"> Event created successfully!</p>
-                <p class="success-text"> Your guest upload link:@GuestLink</p>
+                <p class="success-text"> Share this link or QR code with your guests:</p>
+                <div class="guest-link-box">
+                    <input type="text" class="text-input" readonly value="@GuestLink"/>
+                </div>
+
+                <div class="qr-section">
+                    <img  src="@QrDataUri" alt="QR Code for guest uploads" class="qr-image"/>
+                    <a href="/api/qr/@GuestToken" download class="btn-download">
+                        Download QR Code 
+                    </a>
+                </div>
             </div>
         }
     </section>
@@ -36,6 +47,8 @@
     private string EventName = "";
 
     private string? GuestToken;
+
+    private string? QrDataUri;
 
     private bool IsConnectDisabled =>
         string.IsNullOrWhiteSpace(EventName) || EventName.Trim().Length < 3;
@@ -50,6 +63,7 @@
         if (query.TryGetValue("token", out var token))
         {
             GuestToken = token.ToString();
+            QrDataUri = QrService.GenerateDataUri(GuestLink);
         }
     }
 

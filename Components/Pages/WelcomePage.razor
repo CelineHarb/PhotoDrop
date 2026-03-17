@@ -1,78 +1,79 @@
 ﻿@page "/"
 
 <div class="welcome-container">
-    <div class="content">
-        <h1>PhotoDrop</h1>
+    <div class="welcome-content">
+        <div class="logo-mark">
+            <svg width="48" height="60" viewBox="0 0 32 40">
+                <path d="M16 0 C16 0 0 18 0 26 C0 33.7 7.2 40 16 40 C24.8 40 32 33.7 32 26 C32 18 16 0 16 0Z" fill="#C4A882"/>
+            </svg>
+        </div>
+        <h1 class="title">PhotoDrop</h1>
+        <p class="subtitle">Every moment, collected beautifully.</p>
+        <a href="/get-started" class="btn-cta">Create your event</a>
     </div>
 </div>
-<section class="steps">
-    <div class="steps-grid">
 
-        @* Step 1 *@
-        <div class="step-card">
-            <div class="step-header">
-                <span class="step-number">1</span>
-                <div class="step-icon">
-                    <i class="fa-solid fa-calendar"></i>
-                </div>
+<section class="steps-section">
+    <h2 class="section-heading">How it works</h2>
+
+    <div class="steps-timeline">
+        <div class="timeline-line"></div>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Name your event</h3>
+                <p>Give it a name and connect your Google Drive in one click.</p>
             </div>
-
-            <h3>Create Your Event</h3>
-            <p>Name your event, connect to your google drive, and generate a QR code</p>
         </div>
 
-        @* Step 2 *@
-        <div class="step-card">
-            <div class="step-header">
-                <span class="step-number">2</span>
-                <div class="step-icon">
-                    <i class="fa-solid fa-qrcode"></i>
-                </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Share the QR code</h3>
+                <p>Print it, display it, or text it to your guests.</p>
             </div>
-
-            <h3>Share the QR Code</h3>
-            <p>Guests scan the code and access your event upload page.</p>
         </div>
 
-        @*  Step 3 *@
-        <div class="step-card">
-            <div class="step-header">
-                <span class="step-number">3</span>
-                <div class="step-icon">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                </div>
+        <div class="step">
+            <div class="step-number step-number-coral">3</div>
+            <div class="step-content">
+                <h3>Photos land in your Drive</h3>
+                <p>Guests upload instantly — no app, no login needed.</p>
             </div>
-
-            <h3>Collect the Photos</h3>
-            <p>Photos upload directly to your Google Drive folder.</p>
         </div>
-
-    </div>
-
-    <div class="cta-wrapper">
-        <a href="/get-started" class="btn-get-started">
-            Get Started
-        </a>
     </div>
 </section>
 
-<div class="highlights">
-    <span class="highlight">
-        <i class="fa-solid fa-image"></i>
-        Upload Photos
-    </span>
-
-    <span class="highlight">
-        <i class="fa-solid fa-user-check"></i>
-        No Guest Login
-    </span>
-
-    <span class="highlight">
-        <i class="fa-solid fa-google-drive"></i>
-        Uploads to your Google Drive
-    </span>
-</div>
-
+<section class="highlights-section">
+    <div class="highlight-card">
+        <svg width="20" height="25" viewBox="0 0 32 40" class="highlight-drop">
+            <path d="M16 0 C16 0 0 18 0 26 C0 33.7 7.2 40 16 40 C24.8 40 32 33.7 32 26 C32 18 16 0 16 0Z"/>
+        </svg>
+        <div>
+            <h4>Direct uploads</h4>
+            <p>Photos go straight to Google Drive</p>
+        </div>
+    </div>
+    <div class="highlight-card">
+        <svg width="20" height="25" viewBox="0 0 32 40" class="highlight-drop">
+            <path d="M16 0 C16 0 0 18 0 26 C0 33.7 7.2 40 16 40 C24.8 40 32 33.7 32 26 C32 18 16 0 16 0Z"/>
+        </svg>
+        <div>
+            <h4>No guest accounts</h4>
+            <p>Scan, upload, done — no login required</p>
+        </div>
+    </div>
+    <div class="highlight-card">
+        <svg width="20" height="25" viewBox="0 0 32 40" class="highlight-drop">
+            <path d="M16 0 C16 0 0 18 0 26 C0 33.7 7.2 40 16 40 C24.8 40 32 33.7 32 26 C32 18 16 0 16 0Z"/>
+        </svg>
+        <div>
+            <h4>Works everywhere</h4>
+            <p>Any phone, any browser — just scan the code</p>
+        </div>
+    </div>
+</section>
 
 
 @code {

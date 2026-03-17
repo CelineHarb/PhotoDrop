@@ -1,5 +1,6 @@
 ﻿namespace PhotoDrop.Models
 {
+    public record UploadUrlRequest(string FileName, string ContentType);
     public class EventRecord
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();

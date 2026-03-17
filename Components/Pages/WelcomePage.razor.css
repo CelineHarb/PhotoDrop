@@ -1,59 +1,167 @@
-﻿.welcome-container {
-    min-height: 40vh;
-    background: linear-gradient( 135deg, #F4B8C6 0%, #CBB8FF 40%, #8FAE9A 100% );
+﻿
+.welcome-container {
+    min-height: 100vh;
+    background: var(--bg-primary);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
-.content h1 {
-    font-size: 4rem;
-    color: var(--sage-dark);
-    font-family: "Barrio", system-ui;
+.welcome-content {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.logo-mark {
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: clamp(3rem, 6vw, 5rem);
     font-weight: 400;
+    color: var(--cream);
+    letter-spacing: -0.03em;
+    margin: 0 0 12px;
 }
-/*Highlights*/
-.highlights{
+
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin: 0 0 36px;
+    letter-spacing: 0.01em;
+}
+
+.btn-cta {
+    display: inline-block;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    background: var(--coral);
+    color: var(--bg-primary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .btn-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(212, 119, 92, 0.25);
+    }
+
+/* ===== Steps ===== */
+.steps-section {
+    background: var(--bg-primary);
+    padding: 80px 24px;
+}
+
+.section-heading {
+    font-size: 3rem;
+    font-weight: 400;
+    color: var(--cream);
+    text-align: center;
+    margin: 0 0 48px;
+    letter-spacing: -0.02em;
+}
+
+.steps-timeline {
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    padding-left: 48px;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 14px;
+    top: 4px;
+    bottom: 4px;
+    width: 1px;
+    background: linear-gradient(180deg, var(--gold) 0%, rgba(196,168,130,0.15) 100%);
+}
+
+.step {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    margin-top:20px;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 36px;
 }
 
-.highlight {
+    .step:last-child {
+        margin-bottom: 0;
+    }
+
+.step-number {
+    position: absolute;
+    left: -48px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
     display: flex;
     align-items: center;
-    gap: 15px;
-    font-size: 1.2rem;
-    color: #2B2B2B;
-    margin-bottom: 15px;
-
-}
-.highlight i {
-    font-size:13px;
-    color: var(--sage-dark);
+    justify-content: center;
+    background: var(--bg-primary);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13px;
+    color: var(--gold);
+    flex-shrink: 0;
 }
 
-/*Button*/
-.cta-wrapper{
-    margin-top: 28px;
+.step-content h3 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--cream);
+    margin: 0 0 4px;
+}
+
+.step-content p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ===== Highlights ===== */
+.highlights-section {
+    background: var(--bg-primary);
+    padding: 0 24px 80px;
     display: flex;
     justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
-.btn-get-started {
-    padding: 14px 28px;
-    border-radius: 999px;
+.highlight-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 260px;
+    backdrop-filter: blur(12px);
+}
+
+.highlight-drop path {
+    fill: var(--cream);
+}
+
+.highlight-card h4 {
     font-size: 16px;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    color: var(--sage-dark);
-    border: 1px solid var(--sage);
-    margin-bottom: 2em;
+    font-weight: 500;
+    color: var(--cream);
+    margin: 0 0 4px;
 }
 
-.btn-get-started:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 14px 35px rgba(203, 184, 255, 0.4);
+.highlight-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
 }
+

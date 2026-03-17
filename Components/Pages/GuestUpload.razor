@@ -1,8 +1,11 @@
 ﻿@page "/e/{Token}"
 @inject PhotoDrop.Services.EventStorage EventStorage
+@inject HttpClient Http
+@inject IJSRuntime JS
 @using PhotoDrop.Models
+@using System.Net.Http.Headers
 
-<div class="guest=page-container">
+<div class="guest-page-container">
     @if (eventRecord is null)
     {
         <div class="guest-card">
@@ -14,12 +17,12 @@
     {
         <div class="guest-card">
             <h1 class="guest-title">@eventRecord.EventName</h1>
-            <p class="guest-text">Select photos to upload to this event.</p>
+            <p class="guest-text">Upload your photos to share with the host.</p>
 
             <div class="guest-upload-area">
                 <InputFile OnChange="HandleFilesSelected"
                            multiple
-                           accept=".jpg,.jpeg,.png" />
+                           accept=".jpg,.jpeg,.png,.heic,.heif,.webp" />
 
                 @if (selectedFiles.Count > 0)
                 {
@@ -32,9 +35,28 @@
                         }
                     </ul>
 
-                    <button type="button" class="upload-btn">
-                        Upload Photos
-                    </button>
+                    @* <button type="button" class="upload-btn" @onclick="UploadFiles" disabled="@isUploading">
+                        @(isUploading ? "Uploading..." : "Upload Photos")
+                    </button> *@
+
+                    @if (isUploading)
+                    {
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" style="width: @uploadProgress%"></div>
+                        </div>
+                        <p class="upload-status">Uploading... @uploadProgress%</p>
+                    }
+                    else
+                    {
+                        <button type="button" class="upload-btn" @onclick="UploadFiles">
+                            Upload Photos
+                        </button>
+                    }
+                }
+
+                @if (!string.IsNullOrWhiteSpace(statusMessage))
+                {
+                    <p class="upload-status @statusClass">@statusMessage</p>
                 }
             </div>
         </div>
@@ -47,6 +69,10 @@
 
     private EventRecord? eventRecord;
     private List<IBrowserFile> selectedFiles = new();
+    private bool isUploading;
+    private string? statusMessage;
+    private int uploadProgress;
+    private string statusClass = "";
 
     protected override void OnInitialized()
     {
@@ -55,6 +81,116 @@
 
     private void HandleFilesSelected(InputFileChangeEventArgs e)
     {
-        selectedFiles = e.GetMultipleFiles().ToList();
+        selectedFiles = e.GetMultipleFiles(maximumFileCount: 20).ToList();
+        statusMessage = null;
+        statusClass = "";
     }
+
+    private async Task UploadFiles()
+    {
+        if (selectedFiles.Count == 0)
+            return;
+
+        isUploading = true;
+        statusMessage = null;
+        statusClass = "";
+        uploadProgress = 0;
+
+        int completed = 0;
+        int failed = 0;
+        int total = selectedFiles.Count;
+
+        foreach (var file in selectedFiles)
+        {
+            try
+            {
+                // Step 1: Ask our server for a presigned upload URL
+                var requestBody = new { fileName = file.Name, contentType = file.ContentType };
+                var urlResponse = await Http.PostAsJsonAsync($"/api/upload-url/{Token}", requestBody);
+
+                if (!urlResponse.IsSuccessStatusCode)
+                {
+                    failed++;
+                    uploadProgress = (int)(((completed + failed) * 100.0) / total);
+                    StateHasChanged();
+                    continue;
+                }
+
+                var urlResult = await urlResponse.Content.ReadFromJsonAsync<UploadUrlResponse>();
+                if (urlResult is null || string.IsNullOrWhiteSpace(urlResult.UploadUrl))
+                {
+                    failed++;
+                    uploadProgress = (int)(((completed + failed) * 100.0) / total);
+                    StateHasChanged();
+                    continue;
+                }
+
+                // Step 2: Read the file bytes in C#
+                using var stream = file.OpenReadStream(maxAllowedSize: 15 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var fileBytes = ms.ToArray();
+
+                // Step 3: Upload directly to Google Cloud Storage via JavaScript
+                var success = await JS.InvokeAsync<bool>(
+                    "uploadFileToCloud",
+                    urlResult.UploadUrl,
+                    fileBytes,
+                    file.ContentType
+                );
+
+                if (success)
+                    completed++;
+                else
+                    failed++;
+            }
+            catch
+            {
+                failed++;
+            }
+
+            uploadProgress = (int)(((completed + failed) * 100.0) / total);
+            StateHasChanged();
+        }
+
+        uploadProgress = 100;
+
+        if (completed > 0)
+        {
+            statusMessage = "Moving photos to Google Drive...";
+            StateHasChanged();
+
+            try
+            {
+                var transferResponse = await Http.PostAsync($"/api/transfer/{Token}", null);
+                if (transferResponse.IsSuccessStatusCode)
+                {
+                    statusMessage = $"{completed} of {total} photo(s) uploaded to Google Drive!";
+                    statusClass = "status-success";
+                }
+                else
+                {
+                    statusMessage = $"{completed} photo(s) uploaded but transfer to Drive failed.";
+                    statusClass = "status-error";
+                }
+            }
+            catch
+            {
+                statusMessage = $"{completed} photo(s) uploaded but transfer to Drive failed.";
+                statusClass = "status-error";
+            }
+        }
+        else
+        {
+            statusMessage = "All uploads failed.";
+            statusClass = "status-error";
+        }
+
+        if (failed > 0)
+            statusMessage += $" {failed} failed.";
+        selectedFiles.Clear();
+        isUploading = false;
+    }
+
+    private record UploadUrlResponse(string UploadUrl, string ObjectName);
 }
