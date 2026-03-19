@@ -16,6 +16,10 @@ html, body {
     padding: 0;
     background: var(--bg-primary);
 }
+
+* {
+    outline: none;
+}
 /*===== Section Wrapper =======*/
 .steps {
     padding: 60px 20px;
