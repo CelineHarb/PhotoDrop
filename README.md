@@ -56,4 +56,4 @@ Hosts create an event, connect their Google Drive, and receive a shareable QR co
 PhotoDrop is under active development. The core upload pipeline is fully functional — guests can scan a QR code and upload photos that land in the host's Google Drive. Current focus is on UI polish, abuse prevention, and preparing for database persistence and production deployment.
 
 ## Screenshots
-![Welcome Screen](Photos/PhotoDrop DarkMode Welcome1.png)
+![Welcome Screen](Photos/PhotoDrop%20DarkMode%20Welcome1.png)
