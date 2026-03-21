@@ -60,6 +60,7 @@ PhotoDrop is under active development. The core upload pipeline is fully functio
 ![Welcome Screen](Photos/PhotoDrop%20DarkMode%20Welcome2.png)
 ![Welcome Screen](Photos/PhotoDrop%20DarkMode%20Welcome3.png)
 ![Create Your Event](Photos/CreateYourEvent%20DarkMode.png)
+![Create Your Event](Photos/CreateYourEvent%20QRCode.png)
 ![Guest Upload](Photos/GuestUpload.png)
 ![Guest Upload](Photos/GuestUpload2.png)
 ![Guest Upload](Photos/GuestUpload3.png)
