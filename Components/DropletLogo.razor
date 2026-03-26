@@ -1,0 +1,13 @@
+﻿
+<svg width="@Width" height="@Height" viewBox="0 0 32 40">
+    <path d="M16 0 C16 0 0 18 0 26 C0 33.7 7.2 40 16 40 C24.8 40 32 33.7 32 26 C32 18 16 0 16 0Z"
+          fill="@Fill" opacity="@Opacity" />
+</svg>
+
+@code {
+    [Parameter] public int Width { get; set; } = 28;
+    [Parameter] public int Height { get; set; } = 35;
+    [Parameter] public string Fill { get; set; } = "#C4A882";
+    [Parameter] public string Opacity { get; set; } = "1";
+}
+

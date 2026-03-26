@@ -3,12 +3,12 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 @using PhotoDrop.Models
-@using System.Net.Http.Headers
 
 <div class="guest-page-container">
     @if (eventRecord is null)
     {
         <div class="guest-card">
+            <DropletLogo Width="32" Height="40" />
             <h1 class="guest-title">Event not found</h1>
             <p class="guest-text">This upload link may be invalid or expired.</p>
         </div>
@@ -16,49 +16,106 @@
     else
     {
         <div class="guest-card">
+            <DropletLogo Width="48" Height="60" />
             <h1 class="guest-title">@eventRecord.EventName</h1>
-            <p class="guest-text">Upload your photos to share with the host.</p>
+            <p class="guest-text">Tap below to share your photos</p>
 
-            <div class="guest-upload-area">
-                <InputFile OnChange="HandleFilesSelected"
-                           multiple
-                           accept=".jpg,.jpeg,.png,.heic,.heif,.webp" />
+            @if (!uploadComplete)
+            {
+                <label class="drop-zone">
+                    <InputFile OnChange="HandleFilesSelected"
+                               multiple
+                               accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
+                               @ref="inputFileRef" />
+                    <div class="drop-zone-circle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 5v14M5 12h14" stroke="#C4A882" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <span class="drop-zone-text">Tap to select photos</span>
+                </label>
+            }
 
-                @if (selectedFiles.Count > 0)
-                {
-                    <p class="file-count">@selectedFiles.Count photo(s) selected</p>
-
-                    <ul class="file-list">
-                        @foreach (var file in selectedFiles)
-                        {
-                            <li>@file.Name</li>
-                        }
-                    </ul>
-
-                    @* <button type="button" class="upload-btn" @onclick="UploadFiles" disabled="@isUploading">
-                        @(isUploading ? "Uploading..." : "Upload Photos")
-                    </button> *@
-
-                    @if (isUploading)
+            @if (previews.Count > 0 && !uploadComplete)
+            {
+                <div class="preview-grid">
+                    @foreach (var photo in previews)
                     {
-                        <div class="progress-bar-track">
-                            <div class="progress-bar-fill" style="width: @uploadProgress%"></div>
+                        <div class="preview-item">
+                            <img src="@photo.PreviewUrl" alt="@photo.Name" class="preview-image" />
+
+                            @if (photo.Status == "uploading")
+                            {
+                                <div class="preview-overlay">
+                                    <div class="preview-spinner"></div>
+                                </div>
+                            }
+                            else if (photo.Status == "done")
+                            {
+                                <div class="preview-check">
+                                    <svg width="14" height="14" viewBox="0 0 16 16">
+                                        <path d="M3 8l4 4 6-7" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                            }
+                            else if (photo.Status == "failed")
+                            {
+                                <div class="preview-failed">
+                                    <svg width="14" height="14" viewBox="0 0 16 16">
+                                        <path d="M4 4l8 8M12 4l-8 8" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="preview-remove" @onclick="() => RemovePhoto(photo)">
+                                    <svg width="10" height="10" viewBox="0 0 16 16">
+                                        <path d="M4 4l8 8M12 4l-8 8" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+                                    </svg>
+                                </button>
+                            }
                         </div>
-                        <p class="upload-status">Uploading... @uploadProgress%</p>
                     }
-                    else
-                    {
-                        <button type="button" class="upload-btn" @onclick="UploadFiles">
-                            Upload Photos
-                        </button>
-                    }
-                }
+                </div>
 
-                @if (!string.IsNullOrWhiteSpace(statusMessage))
+                @if (!isUploading)
                 {
-                    <p class="upload-status @statusClass">@statusMessage</p>
+                    <button type="button" class="upload-btn" @onclick="UploadFiles">
+                        Upload @previews.Count photo@(previews.Count == 1 ? "" : "s")
+                    </button>
                 }
-            </div>
+                else
+                {
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
+                    </div>
+                    <p class="upload-progress-text">Uploading @uploadedCount of @previews.Count...</p>
+                }
+            }
+
+            @if (uploadComplete)
+            {
+                <div class="upload-done">
+                    <div class="done-icon">
+                        <svg width="32" height="32" viewBox="0 0 16 16">
+                            <path d="M3 8l4 4 6-7" stroke="#C4A882" stroke-width="1.5" fill="none" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <p class="done-title">@uploadedCount photo@(uploadedCount == 1 ? "" : "s") uploaded!</p>
+                    @if (failedCount > 0)
+                    {
+                        <p class="done-failed">@failedCount failed</p>
+                    }
+                    <button type="button" class="upload-more-btn" @onclick="Reset">
+                        Upload more photos
+                    </button>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(statusMessage))
+            {
+                <p class="status-message @statusClass">@statusMessage</p>
+            }
         </div>
     }
 </div>
@@ -68,50 +125,77 @@
     public string Token { get; set; } = "";
 
     private EventRecord? eventRecord;
-    private List<IBrowserFile> selectedFiles = new();
+    private InputFile? inputFileRef;
+    private List<PhotoPreview> previews = new();
     private bool isUploading;
+    private bool uploadComplete;
+    private int uploadedCount;
+    private int failedCount;
     private string? statusMessage;
-    private int uploadProgress;
     private string statusClass = "";
+
+    private int ProgressPercent => previews.Count == 0 ? 0 : (int)((uploadedCount + failedCount) * 100.0 / previews.Count);
 
     protected override void OnInitialized()
     {
         eventRecord = EventStorage.GetByToken(Token);
     }
 
-    private void HandleFilesSelected(InputFileChangeEventArgs e)
+    private async Task HandleFilesSelected(InputFileChangeEventArgs e)
     {
-        selectedFiles = e.GetMultipleFiles(maximumFileCount: 20).ToList();
         statusMessage = null;
         statusClass = "";
+
+        // Get previews from JavaScript
+        var files = e.GetMultipleFiles(maximumFileCount: 20);
+        var element = inputFileRef?.Element;
+        if (element is not null)
+        {
+            var jsResults = await JS.InvokeAsync<List<JsFilePreview>>("createPreviews", element);
+            previews = jsResults.Select(r => new PhotoPreview
+            {
+                Index = r.Index,
+                Name = r.Name,
+                Size = r.Size,
+                ContentType = r.Type,
+                PreviewUrl = r.PreviewUrl,
+                Status = ""
+            }).ToList();
+        }
+    }
+
+    private void RemovePhoto(PhotoPreview photo)
+    {
+        previews.Remove(photo);
     }
 
     private async Task UploadFiles()
     {
-        if (selectedFiles.Count == 0)
+        if (previews.Count == 0)
             return;
 
         isUploading = true;
+        uploadComplete = false;
+        uploadedCount = 0;
+        failedCount = 0;
         statusMessage = null;
         statusClass = "";
-        uploadProgress = 0;
 
-        int completed = 0;
-        int failed = 0;
-        int total = selectedFiles.Count;
-
-        foreach (var file in selectedFiles)
+        foreach (var photo in previews)
         {
+            photo.Status = "uploading";
+            StateHasChanged();
+
             try
             {
-                // Step 1: Ask our server for a presigned upload URL
-                var requestBody = new { fileName = file.Name, contentType = file.ContentType };
+                // Step 1: Get presigned URL from server
+                var requestBody = new { fileName = photo.Name, contentType = photo.ContentType };
                 var urlResponse = await Http.PostAsJsonAsync($"/api/upload-url/{Token}", requestBody);
 
                 if (!urlResponse.IsSuccessStatusCode)
                 {
-                    failed++;
-                    uploadProgress = (int)(((completed + failed) * 100.0) / total);
+                    photo.Status = "failed";
+                    failedCount++;
                     StateHasChanged();
                     continue;
                 }
@@ -119,78 +203,89 @@
                 var urlResult = await urlResponse.Content.ReadFromJsonAsync<UploadUrlResponse>();
                 if (urlResult is null || string.IsNullOrWhiteSpace(urlResult.UploadUrl))
                 {
-                    failed++;
-                    uploadProgress = (int)(((completed + failed) * 100.0) / total);
+                    photo.Status = "failed";
+                    failedCount++;
                     StateHasChanged();
                     continue;
                 }
 
-                // Step 2: Read the file bytes in C#
-                using var stream = file.OpenReadStream(maxAllowedSize: 15 * 1024 * 1024);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                var fileBytes = ms.ToArray();
-
-                // Step 3: Upload directly to Google Cloud Storage via JavaScript
-                var success = await JS.InvokeAsync<bool>(
-                    "uploadFileToCloud",
-                    urlResult.UploadUrl,
-                    fileBytes,
-                    file.ContentType
-                );
+                // Step 2: Upload directly via JS using the file reference
+                var success = await JS.InvokeAsync<bool>("uploadFileByIndex", photo.Index, urlResult.UploadUrl);
 
                 if (success)
-                    completed++;
+                {
+                    photo.Status = "done";
+                    uploadedCount++;
+                }
                 else
-                    failed++;
+                {
+                    photo.Status = "failed";
+                    failedCount++;
+                }
             }
             catch
             {
-                failed++;
+                photo.Status = "failed";
+                failedCount++;
             }
 
-            uploadProgress = (int)(((completed + failed) * 100.0) / total);
             StateHasChanged();
         }
 
-        uploadProgress = 100;
-
-        if (completed > 0)
+        // Transfer from Cloud Storage to Google Drive
+        if (uploadedCount > 0)
         {
-            statusMessage = "Moving photos to Google Drive...";
+            statusMessage = "Uploading...";
             StateHasChanged();
 
             try
             {
                 var transferResponse = await Http.PostAsync($"/api/transfer/{Token}", null);
-                if (transferResponse.IsSuccessStatusCode)
+                if (!transferResponse.IsSuccessStatusCode)
                 {
-                    statusMessage = $"{completed} of {total} photo(s) uploaded to Google Drive!";
-                    statusClass = "status-success";
+                    statusMessage = "Transfer failed.";
+                    statusClass = "status-error";
                 }
                 else
                 {
-                    statusMessage = $"{completed} photo(s) uploaded but transfer to Drive failed.";
-                    statusClass = "status-error";
+                    statusMessage = null;
                 }
             }
             catch
             {
-                statusMessage = $"{completed} photo(s) uploaded but transfer to Drive failed.";
+                statusMessage = "Transfer failed.";
                 statusClass = "status-error";
             }
         }
-        else
-        {
-            statusMessage = "All uploads failed.";
-            statusClass = "status-error";
-        }
 
-        if (failed > 0)
-            statusMessage += $" {failed} failed.";
-        selectedFiles.Clear();
+        // Clean up preview URLs
+        var urls = previews.Select(p => p.PreviewUrl).Where(u => u != null).ToList();
+        await JS.InvokeVoidAsync("revokePreviews", urls);
+
         isUploading = false;
+        uploadComplete = true;
     }
 
+    private void Reset()
+    {
+        previews.Clear();
+        uploadComplete = false;
+        uploadedCount = 0;
+        failedCount = 0;
+        statusMessage = null;
+        statusClass = "";
+    }
+
+    private class PhotoPreview
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
+        public long Size { get; set; }
+        public string ContentType { get; set; } = "";
+        public string? PreviewUrl { get; set; }
+        public string Status { get; set; } = "";
+    }
+
+    private record JsFilePreview(int Index, string Name, long Size, string Type, string PreviewUrl);
     private record UploadUrlResponse(string UploadUrl, string ObjectName);
 }
