@@ -1,34 +1,51 @@
-﻿using Microsoft.AspNetCore.Authentication.BearerToken;
+﻿using PhotoDrop.Data;
 using PhotoDrop.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace PhotoDrop.Services
+namespace PhotoDrop.Services;
+
+public class EventStorage
 {
-    public class EventStorage
+    private readonly PhotoDropContext _db;
+
+    public EventStorage(PhotoDropContext db)
     {
-        private readonly List<EventRecord> _events = new();
+        _db = db;
+    }
 
-        public EventRecord Add(string eventName, string folderId, string accessToken)
+    public EventRecord Add(string eventName, string folderId, string accessToken)
+    {
+        var record = new EventRecord
         {
-            var record = new EventRecord
-            {
-                EventName = eventName,
-                FolderId = folderId,
-                AccessToken = accessToken,
-                GuestToken = GenerateToken()
-            };
+            EventName = eventName,
+            FolderId = folderId,
+            AccessToken = accessToken,
+            GuestToken = GenerateToken()
+        };
 
-            _events.Add(record);
-            return record;
-        }
+        _db.Events.Add(record);
+        _db.SaveChanges();
+        return record;
+    }
 
-        public EventRecord? GetByToken(string token)
-        {
-            return _events.FirstOrDefault(e => e.GuestToken == token);
-        }
+    public EventRecord? GetByToken(string token)
+    {
+        return _db.Events.FirstOrDefault(e => e.GuestToken == token);
+    }
 
-        private static string GenerateToken()
-        {
-            return Guid.NewGuid().ToString("N")[..12];
-        }
+    public EventRecord? GetById(string id)
+    {
+        return _db.Events.Find(id);
+    }
+
+    public void Update(EventRecord record)
+    {
+        _db.Events.Update(record);
+        _db.SaveChanges();
+    }
+
+    private static string GenerateToken()
+    {
+        return Guid.NewGuid().ToString("N")[..12];
     }
 }

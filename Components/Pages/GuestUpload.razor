@@ -18,9 +18,9 @@
         <div class="guest-card">
             <DropletLogo Width="48" Height="60" />
             <h1 class="guest-title">@eventRecord.EventName</h1>
-            <p class="guest-text">Tap below to share your photos</p>
+            <p class="guest-text">You can upload up to @photoLimit photos</p>
 
-            @if (!uploadComplete)
+            @if (!uploadComplete && remainingSlots > 0)
             {
                 <label class="drop-zone">
                     <InputFile OnChange="HandleFilesSelected"
@@ -83,6 +83,10 @@
                     <button type="button" class="upload-btn" @onclick="UploadFiles">
                         Upload @previews.Count photo@(previews.Count == 1 ? "" : "s")
                     </button>
+                    @if (remainingSlots > 0 && !isUploading)
+                    {
+                        <p class="remaining-text">@remainingSlots more photo(s) allowed</p>
+                    }
                 }
                 else
                 {
@@ -133,12 +137,19 @@
     private int failedCount;
     private string? statusMessage;
     private string statusClass = "";
+    private int photoLimit = 20;
+    private int remainingSlots => photoLimit - previews.Count;
 
     private int ProgressPercent => previews.Count == 0 ? 0 : (int)((uploadedCount + failedCount) * 100.0 / previews.Count);
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         eventRecord = EventStorage.GetByToken(Token);
+
+        if (eventRecord is not null)
+        {
+            photoLimit = eventRecord.PhotoLimit ?? 20;
+        }
     }
 
     private async Task HandleFilesSelected(InputFileChangeEventArgs e)
@@ -146,13 +157,12 @@
         statusMessage = null;
         statusClass = "";
 
-        // Get previews from JavaScript
         var files = e.GetMultipleFiles(maximumFileCount: 20);
         var element = inputFileRef?.Element;
         if (element is not null)
         {
             var jsResults = await JS.InvokeAsync<List<JsFilePreview>>("createPreviews", element);
-            previews = jsResults.Select(r => new PhotoPreview
+            var newPhotos = jsResults.Select(r => new PhotoPreview
             {
                 Index = r.Index,
                 Name = r.Name,
@@ -161,6 +171,24 @@
                 PreviewUrl = r.PreviewUrl,
                 Status = ""
             }).ToList();
+
+            // Only add up to the remaining slots
+            var slotsAvailable = photoLimit - previews.Count;
+            if (slotsAvailable <= 0)
+            {
+                statusMessage = $"You've reached the limit of {photoLimit} photos.";
+                statusClass = "status-error";
+                return;
+            }
+
+            if (newPhotos.Count > slotsAvailable)
+            {
+                statusMessage = $"Only {slotsAvailable} more photo(s) allowed. Some were not added.";
+                statusClass = "status-error";
+                newPhotos = newPhotos.Take(slotsAvailable).ToList();
+            }
+
+            previews.AddRange(newPhotos);
         }
     }
 

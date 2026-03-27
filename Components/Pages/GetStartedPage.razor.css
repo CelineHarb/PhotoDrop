@@ -165,3 +165,196 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(196, 168, 130, 0.12);
     }
+
+/* ===== Storage section ===== */
+.storage-section {
+    text-align: center;
+}
+
+.storage-loading {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 20px 0;
+}
+
+.storage-error {
+    font-size: 14px;
+    color: var(--coral);
+    margin: 16px 0;
+}
+
+.storage-info {
+    margin: 20px 0 28px;
+}
+
+.storage-available {
+    font-size: 16px;
+    color: var(--cream);
+    margin: 0 0 4px;
+}
+
+.storage-estimate {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.storage-highlight {
+    color: var(--gold);
+    font-weight: 500;
+}
+
+/* ===== Limit section ===== */
+.limit-section {
+    margin-bottom: 24px;
+}
+
+.limit-suggestion {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 4px 0 16px;
+}
+
+.limit-control {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.limit-slider {
+    flex: 1;
+    accent-color: var(--gold);
+}
+
+.limit-value {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--gold);
+    min-width: 36px;
+    text-align: center;
+}
+
+/* ===== Upgrade link ===== */
+.storage-upgrade-link {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: underline;
+    margin-bottom: 24px;
+    transition: color 0.15s ease;
+}
+
+    .storage-upgrade-link:hover {
+        color: var(--text-muted);
+    }
+
+/* ===== Success detail ===== */
+.success-detail {
+    font-size: 14px;
+    color: var(--gold);
+    margin: 0 0 20px;
+}
+
+/* ===== Guest count ===== */
+.guest-count-section {
+    margin: 24px 0;
+}
+
+.guest-count-input {
+    max-width: 160px;
+    margin-top: 8px;
+}
+
+/* ===== Calculation card ===== */
+.calculation-card {
+    background: rgba(196, 168, 130, 0.06);
+    border: 1px solid var(--gold-muted);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.calc-recommendation {
+    font-size: 16px;
+    color: var(--cream);
+    margin: 0 0 8px;
+}
+
+.calc-detail {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 4px;
+}
+
+.calc-remaining {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ===== Adjust section ===== */
+.adjust-section {
+    margin-top: 16px;
+}
+
+.btn-adjust {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+    .btn-adjust:hover {
+        color: var(--cream);
+    }
+
+.adjust-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    justify-content: center;
+}
+
+.adjust-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.adjust-input {
+    max-width: 80px;
+    text-align: center;
+}
+
+.adjust-preview {
+    margin-top: 12px;
+}
+
+/* ===== Edit button ===== */
+.btn-edit {
+    margin-top: 20px;
+    background: none;
+    border: 1px solid var(--gold-muted);
+    color: var(--gold);
+    padding: 10px 24px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+    .btn-edit:hover {
+        background: rgba(196, 168, 130, 0.08);
+        transform: translateY(-2px);
+    }
+
+/* ===== Storage note ===== */
+.storage-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 8px 0 0;
+}

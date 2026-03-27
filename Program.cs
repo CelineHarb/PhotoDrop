@@ -6,6 +6,8 @@ using Newtonsoft.Json.Linq;
 using PhotoDrop.Components;
 using PhotoDrop.Services;
 using PhotoDrop.Models;
+using PhotoDrop.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,10 +20,15 @@ builder.Services.AddScoped(sp =>
     return new HttpClient { BaseAddress = new Uri(nav.BaseUri) };
 });
 
+builder.Services.AddHttpClient<TokenService>();
+
+builder.Services.AddDbContext<PhotoDropContext>(options =>
+    options.UseSqlite("Data Source=photodrop.db"));
+
 builder.Services.AddSingleton<GoogleDriveService>();
-builder.Services.AddSingleton<EventStorage>();
 builder.Services.AddSingleton<QrCodeService>();
 builder.Services.AddSingleton<CloudStorageService>();
+builder.Services.AddScoped<EventStorage>();
 
 //Authentication + Google OAuth (store who is signed in)
 builder.Services.AddAuthentication( options =>
@@ -47,6 +54,12 @@ builder.Services.AddAuthentication( options =>
 
     // Helps ensure you get a refresh token for later uploads when host is not online
     options.AccessType = "offline";
+
+    options.Events.OnRedirectToAuthorizationEndpoint = context =>
+    {
+        context.Response.Redirect(context.RedirectUri + "&prompt=consent");
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.AddAuthorization();
@@ -93,33 +106,57 @@ app.MapGet("/auth/google/finish", async (HttpContext ctx, GoogleDriveService dri
     if (string.IsNullOrWhiteSpace(accessToken))
         return Results.Redirect("/get-started?error=missing_access_token");
 
+    // Grab refresh token and expiry 
+    var refreshToken = await ctx.GetTokenAsync("refresh_token");
+    var expiresAt = await ctx.GetTokenAsync("expires_at");
+
     //pull eventName we stored in endpoint
     var authResult = await ctx.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
     string? eventName = null;
-
     if (authResult.Properties?.Items != null &&
         authResult.Properties.Items.ContainsKey("eventName"))
     {
         eventName = authResult.Properties.Items["eventName"];
     }
-
     if (string.IsNullOrWhiteSpace(eventName) || eventName.Trim().Length < 3)
         return Results.Redirect("/get-started?error=missing_event_name");
 
     var cleanedEventName = eventName.Trim();
-
     var folderId = await driveSvc.CreateEventFolderAsync(accessToken, cleanedEventName);
-
     var createdEvent = eventStorage.Add(cleanedEventName, folderId, accessToken);
 
-    // For now, showing it in query string so we can see it worked
+    // Store refresh token and expiry time 
+    createdEvent.RefreshToken = refreshToken;
+    if (DateTime.TryParse(expiresAt, out var parsedExpiry))
+        createdEvent.TokenExpiresAt = parsedExpiry;
+    eventStorage.Update(createdEvent);
+
     return Results.Redirect($"/get-started?connected=1&token={createdEvent.GuestToken}");
 });
 
-app.MapPost("/api/upload/{token}", async (
-    string token,
-    HttpRequest request,EventStorage eventStorage, GoogleDriveService driveSvc) =>
+app.MapGet("/api/storage/{token}", async (string token, EventStorage eventStorage, GoogleDriveService driveSvc, TokenService tokenService) =>
+{
+    var eventRecord = eventStorage.GetByToken(token);
+    if (eventRecord is null)
+        return Results.NotFound(new { error = "Event not found." });
+
+    var accessToken = await tokenService.GetValidAccessTokenAsync(eventRecord);
+    if (accessToken is null)
+        return Results.BadRequest(new { error = "Unable to access Google Drive." });
+
+    var storage = await driveSvc.GetStorageInfoAsync(accessToken);
+
+    return Results.Ok(new
+    {
+        availableFormatted = storage.AvailableFormatted,
+        totalFormatted = storage.TotalFormatted,
+        usedFormatted = storage.UsedFormatted,
+        estimatedPhotos = storage.EstimatedPhotoCapacity,
+        availableBytes = storage.AvailableBytes
+    });
+});
+
+app.MapPost("/api/upload/{token}", async (string token, HttpRequest request,EventStorage eventStorage, GoogleDriveService driveSvc) =>
 {
     // Validate even token
     var eventRecord = eventStorage.GetByToken(token);
@@ -263,15 +300,15 @@ app.MapPost("/api/upload-url/{token}", async (string token, HttpRequest request,
 });
 
 // After guest uploads finish, move files from Cloud Storage to the host's Google Drive
-app.MapPost("/api/transfer/{token}", async (
-    string token,
-    EventStorage eventStorage,
-    CloudStorageService cloudStorage,
-    GoogleDriveService driveSvc) =>
+app.MapPost("/api/transfer/{token}", async ( string token, EventStorage eventStorage, CloudStorageService cloudStorage, GoogleDriveService driveSvc, TokenService tokenService) =>
 {
     var eventRecord = eventStorage.GetByToken(token);
     if (eventRecord is null)
         return Results.NotFound(new { error = "Event not found." });
+
+    var accessToken = await tokenService.GetValidAccessTokenAsync(eventRecord);
+    if (accessToken is null)
+        return Results.BadRequest(new { error = "Unable to access Google Drive. Host may need to reconnect." });
 
     var prefix = $"{eventRecord.Id}/";
     var files = await cloudStorage.ListFilesAsync(prefix);
@@ -289,13 +326,7 @@ app.MapPost("/api/transfer/{token}", async (
             var simpleName = Path.GetFileName(fileName);
             var contentType = simpleName.EndsWith(".png") ? "image/png" : "image/jpeg";
 
-            await driveSvc.UploadPhotoAsync(
-                eventRecord.AccessToken,
-                eventRecord.FolderId,
-                stream,
-                simpleName,
-                contentType
-            );
+            await driveSvc.UploadPhotoAsync( accessToken, eventRecord.FolderId, stream, simpleName, contentType);
 
             await cloudStorage.DeleteFileAsync(fileName);
             transferred++;
@@ -307,6 +338,19 @@ app.MapPost("/api/transfer/{token}", async (
     }
 
     return Results.Ok(new { transferred });
+});
+
+app.MapGet("/api/event-info/{token}", (string token, EventStorage eventStorage) =>
+{
+    var eventRecord = eventStorage.GetByToken(token);
+    if (eventRecord is null)
+        return Results.NotFound(new { error = "Event not found." });
+
+    return Results.Ok(new
+    {
+        eventName = eventRecord.EventName,
+        photoLimit = eventRecord.PhotoLimit ?? 20
+    });
 });
 
 app.MapRazorComponents<App>()
