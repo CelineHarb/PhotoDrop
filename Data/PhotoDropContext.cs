@@ -7,5 +7,6 @@ namespace PhotoDrop.Data
     {
         public PhotoDropContext(DbContextOptions<PhotoDropContext> options) : base(options) { }
         public DbSet<EventRecord> Events { get; set; }
+        public DbSet<GuestSession> GuestSessions { get; set; }
     }
 }

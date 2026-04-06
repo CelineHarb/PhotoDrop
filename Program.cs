@@ -29,6 +29,7 @@ builder.Services.AddSingleton<GoogleDriveService>();
 builder.Services.AddSingleton<QrCodeService>();
 builder.Services.AddSingleton<CloudStorageService>();
 builder.Services.AddScoped<EventStorage>();
+builder.Services.AddScoped<GuestSessionService>();
 
 //Authentication + Google OAuth (store who is signed in)
 builder.Services.AddAuthentication( options =>
@@ -271,19 +272,31 @@ app.MapGet("/api/qr/{token}", (string token, EventStorage eventStorage, QrCodeSe
     return Results.File(pngBytes, "image/png", $"photodrop-{eventRecord.EventName}-qr.png");
 });
 
-//Guest requests a presigned upload URL for each file
-app.MapPost("/api/upload-url/{token}", async (string token, HttpRequest request, EventStorage eventStorage, CloudStorageService cloudStorage) =>
+app.MapPost("/api/upload-url/{token}", async (string token, HttpRequest request, EventStorage eventStorage, CloudStorageService cloudStorage, GuestSessionService sessionService) =>
 {
     var eventRecord = eventStorage.GetByToken(token);
     if (eventRecord is null)
         return Results.NotFound(new { error = "Event not found." });
 
-    // Read the file info from the request body
+    // Enforce total event photo limit
+    if (eventRecord.PhotoLimit.HasValue && eventRecord.PhotoCount >= eventRecord.PhotoLimit.Value)
+        return Results.BadRequest(new { error = "This event has reached its photo limit." });
+
     var body = await request.ReadFromJsonAsync<UploadUrlRequest>();
     if (body is null || string.IsNullOrWhiteSpace(body.FileName) || string.IsNullOrWhiteSpace(body.ContentType))
         return Results.BadRequest(new { error = "fileName and contentType are required." });
 
-    // Validate file type
+    var sessionToken = body.SessionToken;
+    if (string.IsNullOrWhiteSpace(sessionToken))
+        return Results.BadRequest(new { error = "No session found." });
+    var ipAddress = request.HttpContext.Connection.RemoteIpAddress?.ToString();
+    var session = sessionService.GetOrCreateSession(eventRecord.Id, sessionToken, ipAddress);
+
+    // Enforce per-guest limit
+    var guestLimit = eventRecord.PhotoLimit ?? 20;
+    if (session.PhotosUploaded >= guestLimit)
+        return Results.BadRequest(new { error = $"You've reached your limit of {guestLimit} photos." });
+
     if (!FileValidation.AllowedContentTypes.Contains(body.ContentType))
         return Results.BadRequest(new { error = "Invalid file type." });
 
@@ -291,7 +304,6 @@ app.MapPost("/api/upload-url/{token}", async (string token, HttpRequest request,
     if (!FileValidation.AllowedExtensions.Contains(ext))
         return Results.BadRequest(new { error = "Invalid file extension." });
 
-    // Build a unique object name: eventId/timestamp-filename
     var objectName = $"{eventRecord.Id}/{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-{body.FileName}";
 
     var url = cloudStorage.GenerateUploadUrl(objectName, body.ContentType);
@@ -299,8 +311,8 @@ app.MapPost("/api/upload-url/{token}", async (string token, HttpRequest request,
     return Results.Ok(new { uploadUrl = url, objectName = objectName });
 });
 
-// After guest uploads finish, move files from Cloud Storage to the host's Google Drive
-app.MapPost("/api/transfer/{token}", async ( string token, EventStorage eventStorage, CloudStorageService cloudStorage, GoogleDriveService driveSvc, TokenService tokenService) =>
+app.MapPost("/api/transfer/{token}", async (string token, HttpRequest request, EventStorage eventStorage, CloudStorageService cloudStorage,
+    GoogleDriveService driveSvc, TokenService tokenService, GuestSessionService sessionService) =>
 {
     var eventRecord = eventStorage.GetByToken(token);
     if (eventRecord is null)
@@ -309,6 +321,10 @@ app.MapPost("/api/transfer/{token}", async ( string token, EventStorage eventSto
     var accessToken = await tokenService.GetValidAccessTokenAsync(eventRecord);
     if (accessToken is null)
         return Results.BadRequest(new { error = "Unable to access Google Drive. Host may need to reconnect." });
+
+    // Read session token once, before the loop
+    var transferBody = await request.ReadFromJsonAsync<TransferRequest>();
+    var sessionToken = transferBody?.SessionToken;
 
     var prefix = $"{eventRecord.Id}/";
     var files = await cloudStorage.ListFilesAsync(prefix);
@@ -326,8 +342,7 @@ app.MapPost("/api/transfer/{token}", async ( string token, EventStorage eventSto
             var simpleName = Path.GetFileName(fileName);
             var contentType = simpleName.EndsWith(".png") ? "image/png" : "image/jpeg";
 
-            await driveSvc.UploadPhotoAsync( accessToken, eventRecord.FolderId, stream, simpleName, contentType);
-
+            await driveSvc.UploadPhotoAsync(accessToken, eventRecord.FolderId, stream, simpleName, contentType);
             await cloudStorage.DeleteFileAsync(fileName);
             transferred++;
         }
@@ -337,20 +352,27 @@ app.MapPost("/api/transfer/{token}", async ( string token, EventStorage eventSto
         }
     }
 
+    // Update counts once after all transfers
+    eventRecord.PhotoCount += transferred;
+    eventStorage.Update(eventRecord);
+
+    if (!string.IsNullOrWhiteSpace(sessionToken) && transferred > 0)
+    {
+        var session = sessionService.GetOrCreateSession(eventRecord.Id, sessionToken, null);
+        sessionService.IncrementPhotoCount(session.Id, transferred);
+    }
+
     return Results.Ok(new { transferred });
 });
 
-app.MapGet("/api/event-info/{token}", (string token, EventStorage eventStorage) =>
+app.MapGet("/api/guest-uploads/{token}", (string token, string session, EventStorage eventStorage, GuestSessionService sessionService) =>
 {
     var eventRecord = eventStorage.GetByToken(token);
     if (eventRecord is null)
         return Results.NotFound(new { error = "Event not found." });
 
-    return Results.Ok(new
-    {
-        eventName = eventRecord.EventName,
-        photoLimit = eventRecord.PhotoLimit ?? 20
-    });
+    var count = sessionService.GetPhotoCount(eventRecord.Id, session);
+    return Results.Ok(new { photosUploaded = count });
 });
 
 app.MapRazorComponents<App>()

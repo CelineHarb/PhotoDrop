@@ -18,9 +18,16 @@
         <div class="guest-card">
             <DropletLogo Width="48" Height="60" />
             <h1 class="guest-title">@eventRecord.EventName</h1>
-            <p class="guest-text">You can upload up to @photoLimit photos</p>
+            @if (sessionLoaded)
+            {
+                <p class="guest-text">You can upload up to @remainingSlots more photos</p>
+            }
+            else
+            {
+                <p class="guest-text">Loading...</p>
+            }
 
-            @if (!uploadComplete && remainingSlots > 0)
+            @if (!uploadComplete && remainingSlots > 0 && sessionLoaded)
             {
                 <label class="drop-zone">
                     <InputFile OnChange="HandleFilesSelected"
@@ -110,9 +117,16 @@
                     {
                         <p class="done-failed">@failedCount failed</p>
                     }
-                    <button type="button" class="upload-more-btn" @onclick="Reset">
-                        Upload more photos
-                    </button>
+                    @if (remainingSlots > 0)
+                    {
+                        <button type="button" class="upload-more-btn" @onclick="Reset">
+                            Upload more photos
+                        </button>
+                    }
+                    else
+                    {
+                        <p class="done-title">You've reached your photo limit.</p>
+                    }
                 </div>
             }
 
@@ -138,17 +152,60 @@
     private string? statusMessage;
     private string statusClass = "";
     private int photoLimit = 20;
-    private int remainingSlots => photoLimit - previews.Count;
+    private string? sessionToken;
+    private int previouslyUploaded = 0;
+    private bool sessionLoaded = false;
+
+    // This is the key calculation — accounts for previously uploaded AND currently selected photos
+    private int remainingSlots => uploadComplete
+    ? photoLimit - previouslyUploaded
+    : photoLimit - previews.Count - previouslyUploaded;
 
     private int ProgressPercent => previews.Count == 0 ? 0 : (int)((uploadedCount + failedCount) * 100.0 / previews.Count);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         eventRecord = EventStorage.GetByToken(Token);
 
         if (eventRecord is not null)
         {
             photoLimit = eventRecord.PhotoLimit ?? 20;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var existing = await JS.InvokeAsync<string>("eval",
+                "document.cookie.split('; ').find(c => c.startsWith('pd_session='))?.split('=')[1] || ''");
+
+            if (string.IsNullOrWhiteSpace(existing))
+            {
+                sessionToken = Guid.NewGuid().ToString("N")[..16];
+                await JS.InvokeVoidAsync("eval",
+                    $"document.cookie = 'pd_session={sessionToken}; path=/; max-age=86400; SameSite=Lax; Secure'");
+            }
+            else
+            {
+                sessionToken = existing;
+            }
+
+            // Check how many photos this guest has already uploaded
+            try
+            {
+                var response = await Http.GetAsync($"/api/guest-uploads/{Token}?session={sessionToken}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<GuestUploadInfo>();
+                    if (data is not null)
+                        previouslyUploaded = data.PhotosUploaded;
+                }
+            }
+            catch { }
+
+            sessionLoaded = true;
+            StateHasChanged();
         }
     }
 
@@ -172,8 +229,8 @@
                 Status = ""
             }).ToList();
 
-            // Only add up to the remaining slots
-            var slotsAvailable = photoLimit - previews.Count;
+            // FIX: Account for previously uploaded photos when calculating available slots
+            var slotsAvailable = photoLimit - previews.Count - previouslyUploaded;
             if (slotsAvailable <= 0)
             {
                 statusMessage = $"You've reached the limit of {photoLimit} photos.";
@@ -183,7 +240,7 @@
 
             if (newPhotos.Count > slotsAvailable)
             {
-                statusMessage = $"Only {slotsAvailable} more photo(s) allowed. Some were not added.";
+                statusMessage = $"Only {slotsAvailable} photo(s) allowed. Some were not added.";
                 statusClass = "status-error";
                 newPhotos = newPhotos.Take(slotsAvailable).ToList();
             }
@@ -216,8 +273,7 @@
 
             try
             {
-                // Step 1: Get presigned URL from server
-                var requestBody = new { fileName = photo.Name, contentType = photo.ContentType };
+                var requestBody = new { fileName = photo.Name, contentType = photo.ContentType, sessionToken = sessionToken };
                 var urlResponse = await Http.PostAsJsonAsync($"/api/upload-url/{Token}", requestBody);
 
                 if (!urlResponse.IsSuccessStatusCode)
@@ -237,7 +293,6 @@
                     continue;
                 }
 
-                // Step 2: Upload directly via JS using the file reference
                 var success = await JS.InvokeAsync<bool>("uploadFileByIndex", photo.Index, urlResult.UploadUrl);
 
                 if (success)
@@ -268,7 +323,10 @@
 
             try
             {
-                var transferResponse = await Http.PostAsync($"/api/transfer/{Token}", null);
+                var transferContent = new StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(new { sessionToken }),
+                    System.Text.Encoding.UTF8, "application/json");
+                var transferResponse = await Http.PostAsync($"/api/transfer/{Token}", transferContent);
                 if (!transferResponse.IsSuccessStatusCode)
                 {
                     statusMessage = "Transfer failed.";
@@ -290,10 +348,13 @@
         var urls = previews.Select(p => p.PreviewUrl).Where(u => u != null).ToList();
         await JS.InvokeVoidAsync("revokePreviews", urls);
 
+        // FIX: Update previouslyUploaded AFTER uploads complete
+        previouslyUploaded += uploadedCount;
         isUploading = false;
         uploadComplete = true;
     }
 
+    // FIX: Reset clears previews but keeps previouslyUploaded intact
     private void Reset()
     {
         previews.Clear();
@@ -316,4 +377,5 @@
 
     private record JsFilePreview(int Index, string Name, long Size, string Type, string PreviewUrl);
     private record UploadUrlResponse(string UploadUrl, string ObjectName);
+    private record GuestUploadInfo(int PhotosUploaded);
 }

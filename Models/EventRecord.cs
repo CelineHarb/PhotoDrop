@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 namespace PhotoDrop.Models
 {
-    public record UploadUrlRequest(string FileName, string ContentType);
+    public record UploadUrlRequest(string FileName, string ContentType, string? SessionToken = null);
+    public record TransferRequest(string? SessionToken = null);
     public class EventRecord
     {
         [Key] public string Id { get; set; } = Guid.NewGuid().ToString();
