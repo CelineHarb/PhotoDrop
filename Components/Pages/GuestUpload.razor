@@ -21,7 +21,14 @@
 
             @if (eventFull)
             {
-                <p class="guest-text">This event's photo collection is full. Thanks for sharing!</p>
+                @if (previouslyUploaded >= photoLimit)
+                {
+                    <p class="guest-text">You've reached your upload limit. Thanks for sharing!</p>
+                }
+                else
+                {
+                    <p class="guest-text">This event's photo collection is full. Thanks for sharing!</p>
+                }
             }
             else
             {
@@ -39,7 +46,7 @@
                     <label class="drop-zone">
                         <InputFile OnChange="HandleFilesSelected"
                                    multiple
-                                   accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
+                                   accept=".jpg,.jpeg,.png,.webp"
                                    @ref="inputFileRef" />
                         <div class="drop-zone-circle">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -179,10 +186,7 @@
 
         if (eventRecord is not null)
         {
-            photoLimit = eventRecord.PhotoLimit ?? 20;
-
-            if (eventRecord.PhotoLimit.HasValue && eventRecord.PhotoCount >= eventRecord.PhotoLimit.Value)
-                eventFull = true;
+            photoLimit = eventRecord.PhotoLimit ?? 5;
         }
     }
 
@@ -213,6 +217,15 @@
                     var data = await response.Content.ReadFromJsonAsync<GuestUploadInfo>();
                     if (data is not null)
                         previouslyUploaded = data.PhotosUploaded;
+
+                    // Check if this guest has hit their personal limit
+                    if (previouslyUploaded >= photoLimit)
+                        eventFull = true;
+
+                    // Check if the whole event is full
+                    if (eventRecord != null && eventRecord.PhotoLimit.HasValue
+                        && eventRecord.PhotoCount >= eventRecord.PhotoLimit.Value)
+                        eventFull = true;
                 }
             }
             catch { }
@@ -227,7 +240,7 @@
         statusMessage = null;
         statusClass = "";
 
-        var files = e.GetMultipleFiles(maximumFileCount: 20);
+        var files = e.GetMultipleFiles(maximumFileCount: 100);
         var element = inputFileRef?.Element;
         if (element is not null)
         {
@@ -242,7 +255,7 @@
                 Status = ""
             }).ToList();
 
-            // FIX: Account for previously uploaded photos when calculating available slots
+            // Account for previously uploaded photos when calculating available slots
             var slotsAvailable = photoLimit - previews.Count - previouslyUploaded;
             if (slotsAvailable <= 0)
             {
@@ -361,13 +374,13 @@
         var urls = previews.Select(p => p.PreviewUrl).Where(u => u != null).ToList();
         await JS.InvokeVoidAsync("revokePreviews", urls);
 
-        // FIX: Update previouslyUploaded AFTER uploads complete
+        // Update previouslyUploaded AFTER uploads complete
         previouslyUploaded += uploadedCount;
         isUploading = false;
         uploadComplete = true;
     }
 
-    // FIX: Reset clears previews but keeps previouslyUploaded intact
+    // Reset clears previews but keeps previouslyUploaded intact
     private void Reset()
     {
         previews.Clear();
