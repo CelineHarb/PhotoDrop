@@ -1,0 +1,128 @@
+﻿/* ===== Page ===== */
+.faq-page {
+    min-height: 100vh;
+    background: var(--bg-primary);
+}
+
+/* ===== Header ===== */
+.faq-header {
+    text-align: center;
+    padding: 80px 24px 48px;
+}
+
+.faq-title {
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 400;
+    color: var(--cream);
+    margin: 16px 0 8px;
+    letter-spacing: -0.02em;
+}
+
+.faq-subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ===== FAQ List ===== */
+.faq-list {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.faq-item {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+
+.faq-question {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--cream);
+    margin: 0 0 10px;
+}
+
+.faq-answer {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.7;
+}
+
+.faq-link {
+    color: var(--gold);
+    text-decoration: underline;
+    transition: color 0.15s ease;
+}
+
+    .faq-link:hover {
+        color: var(--cream);
+    }
+
+/* ===== CTA ===== */
+.faq-cta {
+    text-align: center;
+    padding: 60px 24px;
+}
+
+.faq-cta-text {
+    font-size: 18px;
+    color: var(--cream);
+    margin: 0 0 20px;
+}
+
+.btn-cta {
+    display: inline-block;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    background: var(--coral);
+    color: var(--bg-primary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .btn-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(212, 119, 92, 0.25);
+    }
+
+/* ===== Footer ===== */
+.welcome-footer {
+    background: var(--bg-primary);
+    padding: 60px 24px 40px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.footer-content {
+    max-width: 480px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.footer-brand {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+}
+
+.footer-tagline {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}

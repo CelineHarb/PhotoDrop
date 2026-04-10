@@ -48,4 +48,10 @@ public class EventStorage
     {
         return Guid.NewGuid().ToString("N")[..12];
     }
+
+    public void Delete(EventRecord record)
+    {
+        _db.Events.Remove(record);
+        _db.SaveChanges();
+    }
 }

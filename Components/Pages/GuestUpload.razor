@@ -18,121 +18,129 @@
         <div class="guest-card">
             <DropletLogo Width="48" Height="60" />
             <h1 class="guest-title">@eventRecord.EventName</h1>
-            @if (sessionLoaded)
+
+            @if (eventFull)
             {
-                <p class="guest-text">You can upload up to @remainingSlots more photos</p>
+                <p class="guest-text">This event's photo collection is full. Thanks for sharing!</p>
             }
             else
             {
-                <p class="guest-text">Loading...</p>
-            }
-
-            @if (!uploadComplete && remainingSlots > 0 && sessionLoaded)
-            {
-                <label class="drop-zone">
-                    <InputFile OnChange="HandleFilesSelected"
-                               multiple
-                               accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
-                               @ref="inputFileRef" />
-                    <div class="drop-zone-circle">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5v14M5 12h14" stroke="#C4A882" stroke-width="1.5" stroke-linecap="round" />
-                        </svg>
-                    </div>
-                    <span class="drop-zone-text">Tap to select photos</span>
-                </label>
-            }
-
-            @if (previews.Count > 0 && !uploadComplete)
-            {
-                <div class="preview-grid">
-                    @foreach (var photo in previews)
-                    {
-                        <div class="preview-item">
-                            <img src="@photo.PreviewUrl" alt="@photo.Name" class="preview-image" />
-
-                            @if (photo.Status == "uploading")
-                            {
-                                <div class="preview-overlay">
-                                    <div class="preview-spinner"></div>
-                                </div>
-                            }
-                            else if (photo.Status == "done")
-                            {
-                                <div class="preview-check">
-                                    <svg width="14" height="14" viewBox="0 0 16 16">
-                                        <path d="M3 8l4 4 6-7" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
-                                    </svg>
-                                </div>
-                            }
-                            else if (photo.Status == "failed")
-                            {
-                                <div class="preview-failed">
-                                    <svg width="14" height="14" viewBox="0 0 16 16">
-                                        <path d="M4 4l8 8M12 4l-8 8" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
-                                    </svg>
-                                </div>
-                            }
-                            else
-                            {
-                                <button class="preview-remove" @onclick="() => RemovePhoto(photo)">
-                                    <svg width="10" height="10" viewBox="0 0 16 16">
-                                        <path d="M4 4l8 8M12 4l-8 8" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
-                                    </svg>
-                                </button>
-                            }
-                        </div>
-                    }
-                </div>
-
-                @if (!isUploading)
+                @if (sessionLoaded)
                 {
-                    <button type="button" class="upload-btn" @onclick="UploadFiles">
-                        Upload @previews.Count photo@(previews.Count == 1 ? "" : "s")
-                    </button>
-                    @if (remainingSlots > 0 && !isUploading)
-                    {
-                        <p class="remaining-text">@remainingSlots more photo(s) allowed</p>
-                    }
+                    <p class="guest-text">You can upload up to @remainingSlots more photos</p>
                 }
                 else
                 {
-                    <div class="progress-bar-track">
-                        <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
-                    </div>
-                    <p class="upload-progress-text">Uploading @uploadedCount of @previews.Count...</p>
+                    <p class="guest-text">Loading...</p>
                 }
-            }
 
-            @if (uploadComplete)
-            {
-                <div class="upload-done">
-                    <div class="done-icon">
-                        <svg width="32" height="32" viewBox="0 0 16 16">
-                            <path d="M3 8l4 4 6-7" stroke="#C4A882" stroke-width="1.5" fill="none" stroke-linecap="round" />
-                        </svg>
+                @if (!uploadComplete && remainingSlots > 0 && sessionLoaded)
+                {
+                    <label class="drop-zone">
+                        <InputFile OnChange="HandleFilesSelected"
+                                   multiple
+                                   accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
+                                   @ref="inputFileRef" />
+                        <div class="drop-zone-circle">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 5v14M5 12h14" stroke="#C4A882" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <span class="drop-zone-text">Tap to select photos</span>
+                    </label>
+                }
+
+                @if (previews.Count > 0 && !uploadComplete)
+                {
+                    <div class="preview-grid">
+                        @foreach (var photo in previews)
+                        {
+                            <div class="preview-item">
+                                <img src="@photo.PreviewUrl" alt="@photo.Name" class="preview-image" />
+
+                                @if (photo.Status == "uploading")
+                                {
+                                    <div class="preview-overlay">
+                                        <div class="preview-spinner"></div>
+                                    </div>
+                                }
+                                else if (photo.Status == "done")
+                                {
+                                    <div class="preview-check">
+                                        <svg width="14" height="14" viewBox="0 0 16 16">
+                                            <path d="M3 8l4 4 6-7" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+                                        </svg>
+                                    </div>
+                                }
+                                else if (photo.Status == "failed")
+                                {
+                                    <div class="preview-failed">
+                                        <svg width="14" height="14" viewBox="0 0 16 16">
+                                            <path d="M4 4l8 8M12 4l-8 8" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+                                        </svg>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <button class="preview-remove" @onclick="() => RemovePhoto(photo)">
+                                        <svg width="10" height="10" viewBox="0 0 16 16">
+                                            <path d="M4 4l8 8M12 4l-8 8" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+                                        </svg>
+                                    </button>
+                                }
+                            </div>
+                        }
                     </div>
-                    <p class="done-title">@uploadedCount photo@(uploadedCount == 1 ? "" : "s") uploaded!</p>
-                    @if (failedCount > 0)
+
+                    @if (!isUploading)
                     {
-                        <p class="done-failed">@failedCount failed</p>
-                    }
-                    @if (remainingSlots > 0)
-                    {
-                        <button type="button" class="upload-more-btn" @onclick="Reset">
-                            Upload more photos
+                        <button type="button" class="upload-btn" @onclick="UploadFiles">
+                            Upload @previews.Count photo@(previews.Count == 1 ? "" : "s")
                         </button>
+                        @if (remainingSlots > 0)
+                        {
+                            <p class="remaining-text">@remainingSlots more photo(s) allowed</p>
+                        }
                     }
                     else
                     {
-                        <p class="done-title">You've reached your photo limit.</p>
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
+                        </div>
+                        <p class="upload-progress-text">Uploading @uploadedCount of @previews.Count...</p>
                     }
-                </div>
-            }
+                }
 
-            @if (!string.IsNullOrWhiteSpace(statusMessage))
-            {
-                <p class="status-message @statusClass">@statusMessage</p>
+                @if (uploadComplete)
+                {
+                    <div class="upload-done">
+                        <div class="done-icon">
+                            <svg width="32" height="32" viewBox="0 0 16 16">
+                                <path d="M3 8l4 4 6-7" stroke="#C4A882" stroke-width="1.5" fill="none" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <p class="done-title">@uploadedCount photo@(uploadedCount == 1 ? "" : "s") uploaded!</p>
+                        @if (failedCount > 0)
+                        {
+                            <p class="done-failed">@failedCount failed</p>
+                        }
+                        @if (remainingSlots > 0)
+                        {
+                            <button type="button" class="upload-more-btn" @onclick="Reset">
+                                Upload more photos
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="done-title">You've reached your photo limit.</p>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(statusMessage))
+                {
+                    <p class="status-message @statusClass">@statusMessage</p>
+                }
             }
         </div>
     }
@@ -151,10 +159,12 @@
     private int failedCount;
     private string? statusMessage;
     private string statusClass = "";
+
     private int photoLimit = 20;
     private string? sessionToken;
     private int previouslyUploaded = 0;
     private bool sessionLoaded = false;
+    private bool eventFull = false;
 
     // This is the key calculation — accounts for previously uploaded AND currently selected photos
     private int remainingSlots => uploadComplete
@@ -170,6 +180,9 @@
         if (eventRecord is not null)
         {
             photoLimit = eventRecord.PhotoLimit ?? 20;
+
+            if (eventRecord.PhotoLimit.HasValue && eventRecord.PhotoCount >= eventRecord.PhotoLimit.Value)
+                eventFull = true;
         }
     }
 

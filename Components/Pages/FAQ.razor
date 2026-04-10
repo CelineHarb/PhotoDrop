@@ -1,0 +1,134 @@
+﻿@page "/faq"
+
+<div class="faq-page">
+    <header class="faq-header">
+        <DropletLogo Width="36" Height="45" />
+        <h1 class="faq-title">Frequently Asked Questions</h1>
+        <p class="faq-subtitle">Everything you need to know about PhotoDrop.</p>
+    </header>
+
+    <section class="faq-list">
+
+        <div class="faq-item">
+            <h3 class="faq-question">What is PhotoDrop?</h3>
+            <p class="faq-answer">
+                PhotoDrop is a simple way to collect photos from your event guests. You create an event,
+                share a QR code, and guests upload photos directly from their phone — no app download
+                or account needed. All photos go straight to your Google Drive.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">How does it work?</h3>
+            <p class="faq-answer">
+                You name your event and connect your Google Drive. PhotoDrop creates a dedicated folder
+                and gives you a QR code. Guests scan the code, select their photos, and upload. Photos
+                transfer automatically into your Drive folder.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">Do guests need to create an account?</h3>
+            <p class="faq-answer">
+                No. Guests never need to log in, download an app, or create an account. They just scan
+                the QR code and start uploading. It works on any phone with a browser.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">Where do the photos go?</h3>
+            <p class="faq-answer">
+                All photos end up in a dedicated folder in your Google Drive called "PhotoDrop - [Your Event Name]".
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">Is there a limit on how many photos guests can upload?</h3>
+            <p class="faq-answer">
+                You set the limit. When you create an event, PhotoDrop checks your available Drive storage
+                and recommends a per-guest photo limit based on how many guests you expect. You can adjust
+                this number, with a minimum of 5 photos per guest. If there isn't enough space for at least
+                5 photos per guest, we'll let you know and suggest reducing your guest count or upgrading
+                your storage.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">Will PhotoDrop fill up my Google Drive?</h3>
+            <p class="faq-answer">
+                PhotoDrop is designed to protect your storage. When you create an event, we suggest a photo
+                limit based on 50% of your available Drive space — keeping the other half safe for your
+                files, emails, and Google Photos. You can adjust the limit higher or lower depending on
+                your needs, but we'll always show you exactly how much space the event will use before
+                you confirm.
+            </p>
+        </div>
+
+
+        <div class="faq-item">
+            <h3 class="faq-question">How long do I have to collect photos?</h3>
+            <p class="faq-answer">
+                Your event link and QR code stay active as long as the event exists. Guests can upload
+                photos during the event or even days after — there's no time limit. Just make sure to
+                keep the PhotoDrop folder in your Google Drive until you're done collecting. If the folder
+                is deleted, new uploads won't be able to transfer to your Drive.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">What if more guests show up than expected?</h3>
+            <p class="faq-answer">
+                Anyone with the QR code can upload, even if more guests show up than you planned for.
+                Each guest gets the same per-person photo limit. Once the total photo capacity for the
+                event is reached, guests will see a message that the collection is full.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">Is my Google Drive secure?</h3>
+            <p class="faq-answer">
+                Yes. PhotoDrop uses Google's official OAuth 2.0 authentication, which means we never see
+                or store your Google password. We only have permission to create and upload files to folders
+                that PhotoDrop creates — we can't access your other Drive files.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">What file types are supported?</h3>
+            <p class="faq-answer">
+                Guests can upload any common photo format from their phone. Each file can be up to
+                15 MB. Every upload is verified to make sure it's a real image file.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3 class="faq-question">How do I get more storage?</h3>
+            <p class="faq-answer">
+                PhotoDrop uses your existing Google Drive storage. If you need more space, you can upgrade
+                through <a href="https://one.google.com" target="_blank" class="faq-link">Google One</a>,
+                which offers plans starting at 100 GB. After upgrading, PhotoDrop will automatically
+                detect your new storage capacity when you create your next event.
+            </p>
+        </div>
+
+    </section>
+
+    <div class="faq-cta">
+        <p class="faq-cta-text">Ready to start collecting photos?</p>
+        <a href="/get-started" class="btn-cta">Create your event</a>
+    </div>
+
+    <footer class="welcome-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <DropletLogo />
+                <span class="footer-brand">PhotoDrop</span>
+            </div>
+            <p class="footer-tagline">Collect every angle of every moment.</p>
+        </div>
+    </footer>
+</div>
+
+@code {
+
+}

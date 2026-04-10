@@ -1,0 +1,21 @@
+﻿<nav class="nav-bar nav-bar-static">
+    <a href="/" class="nav-item @(IsActive("/") ? "nav-active" : "")">Home</a>
+    <a href="/faq" class="nav-item @(IsActive("/faq") ? "nav-active" : "")">FAQ</a>
+    <a href="/get-started" class="nav-item @(IsActive("/get-started") ? "nav-active" : "")">Get Started</a>
+</nav>
+
+@code {
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += (_, _) => InvokeAsync(StateHasChanged);
+    }
+
+    private bool IsActive(string path)
+    {
+        var relativePath = Nav.ToBaseRelativePath(Nav.Uri);
+        if (path == "/") return string.IsNullOrEmpty(relativePath);
+        return relativePath.Equals(path.TrimStart('/'), StringComparison.OrdinalIgnoreCase);
+    }
+}

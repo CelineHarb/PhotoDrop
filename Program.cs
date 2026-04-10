@@ -8,6 +8,7 @@ using PhotoDrop.Services;
 using PhotoDrop.Models;
 using PhotoDrop.Data;
 using Microsoft.EntityFrameworkCore;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddSingleton<QrCodeService>();
 builder.Services.AddSingleton<CloudStorageService>();
 builder.Services.AddScoped<EventStorage>();
 builder.Services.AddScoped<GuestSessionService>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddInMemoryRateLimiting();
 
 //Authentication + Google OAuth (store who is signed in)
 builder.Services.AddAuthentication( options =>
@@ -70,6 +73,40 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = 50 * 1024 * 1024;
 });
 
+// Rate limiting
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "POST:/api/upload-url/*",
+            Period = "1m",
+            Limit = 120
+        },
+        new RateLimitRule
+        {
+            Endpoint = "POST:/api/transfer/*",
+            Period = "1m",
+            Limit = 10
+        },
+        new RateLimitRule
+        {
+            Endpoint = "GET:/api/storage/*",
+            Period = "1m",
+            Limit = 10
+        },
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Period = "1m",
+            Limit = 200
+        }
+    };
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -88,6 +125,7 @@ app.UseAntiforgery();
 // auth middleware 
 app.UseAuthentication(); // read the cookie on every request 
 app.UseAuthorization(); //enforce access rules
+app.UseIpRateLimiting();
 
 // endpoints 
 app.MapGet("/auth/google/start", (HttpContext ctx, string eventName) =>

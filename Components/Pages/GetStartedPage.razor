@@ -4,6 +4,8 @@
 @inject PhotoDrop.Services.QrCodeService QrService
 @inject PhotoDrop.Services.EventStorage EventStorage
 @using Microsoft.AspNetCore.WebUtilities
+@inject IJSRuntime JS
+
 
 <div class="get-started-page-container">
     <header class="get-started-header">
@@ -32,7 +34,10 @@
         else if (!settingsConfirmed)
         {
             <div class="storage-section">
-                <p class="success-title">Google Drive connected!</p>
+                @if (storageError is null)
+                {
+                    <p class="success-title">Google Drive connected!</p>
+                }
 
                 @if (isLoadingStorage)
                 {
@@ -40,9 +45,12 @@
                 }
                 else if (storageError is not null)
                 {
-                    <p class="storage-error">@storageError</p>
-                    <button class="btn-connect" @onclick="ConfirmSettings">
-                        Skip and continue
+                    <p class="storage-error">Google Drive connection failed.</p>
+                    <p class="storage-error" style="font-size: 13px;">
+                        We couldn't connect to your Drive. Please try creating your event again.
+                    </p>
+                    <button class="btn-connect" @onclick="StartOver">
+                        Start over
                     </button>
                 }
                 else
@@ -67,58 +75,71 @@
                                @bind:event="oninput" />
                     </div>
 
-                    @if (expectedGuests > 0)
+                    @if (expectedGuests.HasValue && expectedGuests > 0)
                     {
-                        <div class="calculation-card">
-                            <p class="calc-recommendation">
-                                We recommend <span class="storage-highlight">@calculatedLimit</span> photos per guest
-                            </p>
-                            <p class="calc-detail">
-                                @expectedGuests guests × @calculatedLimit photos = ~@totalPhotos photos (~@estimatedUsageFormatted)
-                            </p>
-                            <p class="calc-remaining">
-                                You'll still have about <span class="storage-highlight">@remainingSpaceFormatted</span> free on your Drive
-                            </p>
-
-                            <div class="adjust-section">
-                                <button class="btn-adjust" @onclick="ToggleAdjust">
-                                    @(showAdjust ? "Hide" : "Adjust limit")
-                                </button>
-
-                                @if (showAdjust)
-                                {
-                                    <div class="adjust-control">
-                                        <label class="adjust-label">Photos per guest:</label>
-                                        <input type="number"
-                                               class="text-input adjust-input"
-                                               min="5"
-                                               max="@maxPerGuest"
-                                               @bind="guestPhotoLimit"
-                                               @bind:event="oninput" />
-                                    </div>
-
-                                    @if (guestPhotoLimit != calculatedLimit)
-                                    {
-                                        <div class="adjust-preview">
-                                            <p class="calc-detail">
-                                                @expectedGuests guests × @guestPhotoLimit photos = ~@adjustedTotalPhotos photos (~@adjustedUsageFormatted)
-                                            </p>
-                                            <p class="calc-remaining">
-                                                You'll still have about <span class="storage-highlight">@adjustedRemainingFormatted</span> free
-                                            </p>
-                                        </div>
-                                    }
-                                }
+                        @if (tooManyGuests)
+                        {
+                            <div class="calculation-card">
+                                <p class="storage-error">
+                                    Not enough storage for that many guests. Each guest needs at least 5 photos.
+                                    Your Drive space supports up to
+                                    <span class="storage-highlight">@maxGuests guests</span>.
+                                </p>
+                                <a href="https://one.google.com" target="_blank" class="storage-upgrade-link">
+                                    Need more space? Upgrade Google storage
+                                </a>
                             </div>
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="calculation-card">
+                                <p class="calc-recommendation">
+                                    We recommend <span class="storage-highlight">@calculatedLimit</span> photos per guest
+                                </p>
+                                <p class="calc-detail">
+                                    @expectedGuests guests × @calculatedLimit photos = ~@totalPhotos photos (~@estimatedUsageFormatted)
+                                </p>
+                                <p class="calc-remaining">
+                                    You'll still have about <span class="storage-highlight">@remainingSpaceFormatted</span> free on your Drive
+                                </p>
+                                <div class="adjust-section">
+                                    <button class="btn-adjust" @onclick="ToggleAdjust">
+                                        @(showAdjust ? "Hide" : "Adjust limit")
+                                    </button>
+                                    @if (showAdjust)
+                                    {
+                                        <div class="adjust-control">
+                                            <label class="adjust-label">Photos per guest:</label>
+                                            <input type="number"
+                                                   class="text-input adjust-input"
+                                                   min="5"
+                                                   max="@maxPerGuest"
+                                                   @bind="guestPhotoLimit"
+                                                   @bind:event="oninput" />
+                                        </div>
+                                        @if (guestPhotoLimit != calculatedLimit)
+                                        {
+                                            <div class="adjust-preview">
+                                                <p class="calc-detail">
+                                                    @expectedGuests guests × @guestPhotoLimit photos = ~@adjustedTotalPhotos photos (~@adjustedUsageFormatted)
+                                                </p>
+                                                <p class="calc-remaining">
+                                                    You'll still have about <span class="storage-highlight">@adjustedRemainingFormatted</span> free
+                                                </p>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
 
-                        <a href="https://one.google.com" target="_blank" class="storage-upgrade-link">
-                            Need more space? Upgrade Google storage
-                        </a>
+                            <a href="https://one.google.com" target="_blank" class="storage-upgrade-link">
+                                Need more space? Upgrade Google storage
+                            </a>
 
-                        <button class="btn-connect" @onclick="ConfirmSettings">
-                            Confirm & get QR code
-                        </button>
+                            <button class="btn-connect" @onclick="ConfirmSettings">
+                                Confirm & get QR code
+                            </button>
+                        }
                     }
                 }
             </div>
@@ -134,6 +155,16 @@
 
                 <div class="guest-link-box">
                     <input type="text" class="text-input" readonly value="@GuestLink" />
+                    <button class="btn-copy" @onclick="CopyLink">
+                        @if (linkCopied)
+                        {
+                            <i class="fa-solid fa-check" style="color: var(--gold);"></i>
+                        }
+                        else
+                        {
+                            <i class="fa-regular fa-copy" style="color: var(--gold);"></i>
+                        }
+                    </button>
                 </div>
 
                 <div class="qr-section">
@@ -144,7 +175,7 @@
                 </div>
 
                 <button class="btn-edit" @onclick="EditSettings">
-                    Edit settings
+                    Change Photo Limit 
                 </button>
             </div>
         }
@@ -165,38 +196,57 @@
     private long usableBytes; // 50% of available
 
     // Guest count and limits
-    private int expectedGuests;
+    private int? expectedGuests;
     private int guestPhotoLimit;
     private bool showAdjust;
     private bool settingsConfirmed;
 
-    // Average photo size: 5 MB
-    private const long AvgPhotoBytes = 5 * 1024 * 1024;
+    // Average photo size: 8 MB
+    private const long AvgPhotoBytes = 8 * 1024 * 1024;
 
     // Calculated values based on guest count
     private int calculatedLimit => expectedGuests > 0
         ? Math.Max(5, (int)(usableBytes / AvgPhotoBytes / expectedGuests))
         : 0;
 
-    private int totalPhotos => expectedGuests * calculatedLimit;
+    private int totalPhotos => (expectedGuests ?? 0) * calculatedLimit;
     private long totalUsageBytes => totalPhotos * AvgPhotoBytes;
     private string estimatedUsageFormatted => FormatBytes(totalUsageBytes);
     private string remainingSpaceFormatted => FormatBytes(availableBytes - totalUsageBytes);
 
     // Adjusted values when host manually changes the limit
-    private int adjustedTotalPhotos => expectedGuests * guestPhotoLimit;
+    private int adjustedTotalPhotos => (expectedGuests ?? 0) * guestPhotoLimit;
     private long adjustedUsageBytes => adjustedTotalPhotos * AvgPhotoBytes;
     private string adjustedUsageFormatted => FormatBytes(adjustedUsageBytes);
     private string adjustedRemainingFormatted => FormatBytes(availableBytes - adjustedUsageBytes);
 
-    private int maxPerGuest => expectedGuests > 0
-        ? Math.Max(5, (int)(usableBytes / AvgPhotoBytes / expectedGuests) * 2)
-        : 50;
+    private int maxPerGuest => (expectedGuests ?? 0) > 0
+    ? Math.Max(5, (int)(availableBytes / AvgPhotoBytes / (expectedGuests ?? 0)))
+    : 5;
+
+    private bool tooManyGuests => (expectedGuests ?? 0) > 0
+    && (usableBytes / AvgPhotoBytes / (expectedGuests ?? 0)) < 5;
+
+    private int maxGuests => usableBytes > 0
+        ? (int)(usableBytes / AvgPhotoBytes / 5) : 0;
 
     private bool IsConnectDisabled =>
         string.IsNullOrWhiteSpace(EventName) || EventName.Trim().Length < 3;
 
     private string GuestLink => $"{Nav.BaseUri}e/{GuestToken}";
+
+    private bool linkCopied = false;
+
+    private async Task CopyLink()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", GuestLink);
+        linkCopied = true;
+        StateHasChanged();
+
+        await Task.Delay(2000);
+        linkCopied = false;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -285,6 +335,20 @@
         if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
         if (bytes < 1024L * 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
         return $"{bytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
+    }
+
+    private void StartOver()
+    {
+        if (!string.IsNullOrWhiteSpace(GuestToken))
+        {
+            var eventRecord = EventStorage.GetByToken(GuestToken);
+            if (eventRecord is not null)
+            {
+                EventStorage.Delete(eventRecord);
+            }
+        }
+
+        Nav.NavigateTo("/get-started", forceLoad: true);
     }
 
     private record StorageResponse(string AvailableFormatted, string TotalFormatted, string UsedFormatted, int EstimatedPhotos, long AvailableBytes);

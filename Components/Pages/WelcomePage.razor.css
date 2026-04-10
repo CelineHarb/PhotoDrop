@@ -236,3 +236,19 @@
     margin: 24px 0 0;
 }
 
+@media (max-width: 768px) {
+    .steps-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+
+    .nav-bar {
+        gap: 20px;
+        padding: 14px 24px;
+    }
+
+    .statement-text {
+        font-size: 1.5em;
+    }
+}
+

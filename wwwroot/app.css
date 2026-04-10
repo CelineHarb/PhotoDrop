@@ -85,3 +85,35 @@ html, body {
   color: var(--text-muted);
   line-height: 1.5;
 }
+
+/* ========= Nav bar ========= */
+.nav-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 38px;
+    padding: 16px 48px;
+}
+
+.nav-item {
+    font-size: 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+    .nav-item:hover {
+        color: var(--cream);
+    }
+
+.nav-active {
+    color: var(--cream);
+}
+
+@media (max-width: 768px) {
+    .nav-bar {
+        justify-content: center;
+        gap: 28px;
+        padding: 14px 24px;
+    }
+}
+
