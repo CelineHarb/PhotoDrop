@@ -11,10 +11,22 @@ public class CloudStorageService
 
     public CloudStorageService()
     {
-        var credentialPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Secrets", "service-account.json");
+        var json = Environment.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT_JSON");
+        ServiceAccountCredential serviceAccountCredential;
 
-        var serviceAccountCredential = ServiceAccountCredential.FromServiceAccountData(
-            File.OpenRead(credentialPath));
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            // Production: load from environment variable
+            serviceAccountCredential = ServiceAccountCredential.FromServiceAccountData(
+                new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)));
+        }
+        else
+        {
+            // Development: load from local file
+            var credentialPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Secrets", "service-account.json");
+            serviceAccountCredential = ServiceAccountCredential.FromServiceAccountData(
+                File.OpenRead(credentialPath));
+        }
 
         var googleCredential = GoogleCredential.FromServiceAccountCredential(serviceAccountCredential);
 
