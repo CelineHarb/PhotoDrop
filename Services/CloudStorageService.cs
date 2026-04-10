@@ -17,7 +17,9 @@ public class CloudStorageService
 
         if (!string.IsNullOrWhiteSpace(clientEmail) && !string.IsNullOrWhiteSpace(privateKey))
         {
-            // Production: build credential from individual values
+            // Azure strips newlines from the private key, so we restore them
+            privateKey = privateKey.Replace("\\n", "\n");
+
             serviceAccountCredential = new ServiceAccountCredential(
                 new ServiceAccountCredential.Initializer(clientEmail)
                 {
