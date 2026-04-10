@@ -1,69 +1,45 @@
 ﻿# PhotoDrop
 
+**Live Site:** [photodrop-e3dsgbaja5gsb9ck.canadacentral-01.azurewebsites.net](https://photodrop-e3dsgbaja5gsb9ck.canadacentral-01.azurewebsites.net)
+
 PhotoDrop is a web application that allows event hosts to collect photos from guests through a simple QR code — no guest login required.
 
-Hosts create an event, connect their Google Drive, and receive a shareable QR code. Guests scan the QR code and upload photos directly — files go straight to Google Cloud Storage, then transfer into the host's Google Drive folder.
+Hosts create an event, connect their Google Drive, and receive a shareable QR code. Guests scan the QR code and upload photos directly from their phone. Photos transfer securely through Google Cloud Storage into the host's Google Drive folder.
 
-> This project is currently a Work In Progress.
+## Features
 
-## Current Features
 - Event creation with Google OAuth and automatic Drive folder setup
 - QR code generation and download for guest sharing
 - Direct-to-cloud photo uploads via presigned URLs (browser → Cloud Storage → Drive)
-- Real-time per-file upload progress and status feedback
-- Backend file validation (type, size, extension, magic bytes)
-- Dark-themed landing page and guest upload UI
-
-## Planned Features
-- Rate limiting and abuse prevention
-- Database persistence (replace in-memory EventStorage)
-- Stored Google refresh tokens for long-lived uploads
-- Drag-and-drop photo uploads
-- Production deployment
+- Parallel file transfers from Cloud Storage to Google Drive for speed
+- Real-time photo previews with per-file upload status
+- Smart storage management — checks host's Drive space and recommends per-guest limits
+- Per-guest upload tracking using session-based authentication
+- Backend file validation (type, size, extension, magic byte verification)
+- Rate limiting to prevent server abuse
+- Refresh token storage for long-lived upload support
+- SQLite database persistence for events and guest sessions
+- FAQ page
+- Dark-themed responsive UI across all pages
+- Mobile-friendly design
 
 ## Tech Stack
 
-### Frontend
-- Blazor (.NET 8)
-- Razor Components
-- HTML / CSS
-- JavaScript (for direct-to-cloud uploads via presigned URLs)
+**Frontend:** Blazor Server (.NET 8), Razor Components, HTML/CSS, JavaScript
 
-### Backend
-- C#
-- ASP.NET Core
-- Google OAuth 2.0
-- Google Drive API
-- Google Cloud Storage (presigned URL uploads)
+**Backend:** C#, ASP.NET Core, SQLite, Entity Framework Core
 
-### External Services
-- Google Cloud Storage — temporary file storage via presigned URLs
-- Google Drive API — final destination for guest photos
+**External Services:** Google OAuth 2.0, Google Drive API, Google Cloud Storage
 
-## Architecture Overview
+## How It Works
 
 1. Host creates an event and connects Google Drive via OAuth
-2. Server creates a dedicated Drive folder and generates a guest token
-3. Host receives a QR code and shareable link for the event
-4. Guests scan the QR code — no login required
-5. For each photo, the guest's browser requests a presigned upload URL from the server
-6. The server validates the file type and generates a temporary Cloud Storage URL
-7. The guest's browser uploads directly to Google Cloud Storage (server is not in the upload path)
-8. After all uploads complete, the server transfers files from Cloud Storage to the host's Google Drive folder
-9. Files are deleted from Cloud Storage after transfer
-
-# Project Status
-PhotoDrop is under active development. The core upload pipeline is fully functional — guests can scan a QR code and upload photos that land in the host's Google Drive. Current focus is on UI polish, abuse prevention, and preparing for database persistence and production deployment.
-
-## Screenshots
-![Welcome Screen](Photos/PhotoDrop%20DarkMode%20Welcome1.png)
-![Welcome Screen](Photos/PhotoDrop%20DarkMode%20Welcome2.png)
-![Welcome Screen](Photos/PhotoDrop%20DarkMode%20Welcome3.png)
-![Create Your Event](Photos/CreateYourEvent%20DarkMode.png)
-![Create Your Event](Photos/CreateYourEvent%20QRCode.png)
-![Guest Upload](Photos/GuestUploadNew.png)
-![Guest Upload](Photos/GuestUploadNew2.png)
-![Guest Upload](Photos/GuestUploadNew3.png)
-![Guest Upload](Photos/GuestUploadNew4.png)
-![Guest Upload](Photos/GoogleDriveUpload.png)
+2. PhotoDrop checks available Drive storage and suggests a per-guest photo limit
+3. Host receives a QR code and shareable link
+4. Guests scan the QR code — no login or app download needed
+5. Guest selects photos and sees previews before uploading
+6. Each photo uploads directly from the guest's browser to Google Cloud Storage via presigned URLs
+7. After uploads complete, the server transfers all files to the host's Google Drive in parallel
+8. Files are removed from Cloud Storage after transfer
+9. Guest sessions track uploads to enforce per-guest limits across visits
 
