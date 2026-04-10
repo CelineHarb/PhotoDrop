@@ -11,14 +11,18 @@ public class CloudStorageService
 
     public CloudStorageService()
     {
-        var json = Environment.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT_JSON");
+        var clientEmail = Environment.GetEnvironmentVariable("GCS_CLIENT_EMAIL");
+        var privateKey = Environment.GetEnvironmentVariable("GCS_PRIVATE_KEY");
         ServiceAccountCredential serviceAccountCredential;
 
-        if (!string.IsNullOrWhiteSpace(json))
+        if (!string.IsNullOrWhiteSpace(clientEmail) && !string.IsNullOrWhiteSpace(privateKey))
         {
-            // Production: load from environment variable
-            serviceAccountCredential = ServiceAccountCredential.FromServiceAccountData(
-                new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)));
+            // Production: build credential from individual values
+            serviceAccountCredential = new ServiceAccountCredential(
+                new ServiceAccountCredential.Initializer(clientEmail)
+                {
+                    ProjectId = "photodrop-489015"
+                }.FromPrivateKey(privateKey));
         }
         else
         {
