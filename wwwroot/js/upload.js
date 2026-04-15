@@ -61,20 +61,21 @@ window.revokePreviews = function (urls) {
 };
 
 // Copies text to clipboard with mobile fallback
-window.copyToClipboard = async function (text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch {
-        const el = document.createElement('textarea');
-        el.value = text;
-        el.style.position = 'fixed';
-        el.style.opacity = '0';
-        document.body.appendChild(el);
-        el.focus();
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        return true;
-    }
+window.copyToClipboard = function (text) {
+    // Safari iOS requires synchronous execution
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.position = 'fixed';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.opacity = '0';
+    el.setAttribute('readonly', '');
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    // For iOS specifically
+    el.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    return true;
 }
