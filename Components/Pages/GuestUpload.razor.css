@@ -252,11 +252,12 @@
     font-size: 14px;
     cursor: pointer;
     transition: background 0.2s ease, transform 0.15s ease;
+    margin-top: 1em;
 }
 
     .upload-more-btn:hover {
         background: rgba(196, 168, 130, 0.08);
-        transform: translateY(-2px);
+        transform: translateY(-2px);   
     }
 
 /* ===== Status message ===== */

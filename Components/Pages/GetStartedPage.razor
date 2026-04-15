@@ -239,7 +239,7 @@
 
     private async Task CopyLink()
     {
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", GuestLink);
+        await JS.InvokeVoidAsync("copyToClipboard", GuestLink);
         linkCopied = true;
         StateHasChanged();
 
