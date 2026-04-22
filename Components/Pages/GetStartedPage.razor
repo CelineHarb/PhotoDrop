@@ -148,7 +148,7 @@
                             <a href="https://one.google.com" target="_blank" class="storage-upgrade-link">
                                 Need more space? Upgrade Google storage
                             </a>
-                            <button class="btn-connect" disabled="@(!guestPhotoLimit.HasValue || guestPhotoLimit < 5 || adjustedUsageBytes > availableBytes)" @onclick="ConfirmSettings">
+                            <button class="btn-connect" disabled="@(showAdjust && (!guestPhotoLimit.HasValue || guestPhotoLimit < 5 || adjustedUsageBytes > availableBytes))" @onclick="ConfirmSettings">
                                 Confirm & get QR code
                             </button>
                         }
