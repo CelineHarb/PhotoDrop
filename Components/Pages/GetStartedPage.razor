@@ -117,26 +117,38 @@
                                                    @bind="guestPhotoLimit"
                                                    @bind:event="oninput" />
                                         </div>
-                                        @if (guestPhotoLimit != calculatedLimit)
+                                        @if(guestPhotoLimit.HasValue && guestPhotoLimit < 5)
+                                                        {
+                                            <p class="storage-error">Minimum is 5 photos per guest.</p>
+                                        }
+                                        @if (guestPhotoLimit != calculatedLimit && guestPhotoLimit >= 5)
                                         {
                                             <div class="adjust-preview">
-                                                <p class="calc-detail">
-                                                    @expectedGuests guests × @guestPhotoLimit photos = ~@adjustedTotalPhotos photos (~@adjustedUsageFormatted)
-                                                </p>
-                                                <p class="calc-remaining">
-                                                    You'll still have about <span class="storage-highlight">@adjustedRemainingFormatted</span> free
-                                                </p>
+                                                @if (adjustedUsageBytes > availableBytes)
+                                                {
+                                                    <p class="storage-error">
+                                                        This exceeds your available Drive storage. The maximum for @expectedGuests guests is
+                                                        <span class="storage-highlight">@maxPerGuest</span> photos per guest.
+                                                    </p>
+                                                }
+                                                else
+                                                {
+                                                    <p class="calc-detail">
+                                                        @expectedGuests guests × @guestPhotoLimit photos = ~@adjustedTotalPhotos photos (~@adjustedUsageFormatted)
+                                                    </p>
+                                                    <p class="calc-remaining">
+                                                        You'll still have about <span class="storage-highlight">@adjustedRemainingFormatted</span> free
+                                                    </p>
+                                                }
                                             </div>
                                         }
                                     }
                                 </div>
                             </div>
-
                             <a href="https://one.google.com" target="_blank" class="storage-upgrade-link">
                                 Need more space? Upgrade Google storage
                             </a>
-
-                            <button class="btn-connect" @onclick="ConfirmSettings">
+                            <button class="btn-connect" disabled="@(!guestPhotoLimit.HasValue || guestPhotoLimit < 5 || adjustedUsageBytes > availableBytes)" @onclick="ConfirmSettings">
                                 Confirm & get QR code
                             </button>
                         }
@@ -197,7 +209,7 @@
 
     // Guest count and limits
     private int? expectedGuests;
-    private int guestPhotoLimit;
+    private int? guestPhotoLimit;
     private bool showAdjust;
     private bool settingsConfirmed;
 
@@ -215,7 +227,7 @@
     private string remainingSpaceFormatted => FormatBytes(availableBytes - totalUsageBytes);
 
     // Adjusted values when host manually changes the limit
-    private int adjustedTotalPhotos => (expectedGuests ?? 0) * guestPhotoLimit;
+    private int adjustedTotalPhotos => (expectedGuests ?? 0) * (guestPhotoLimit ?? 0);
     private long adjustedUsageBytes => adjustedTotalPhotos * AvgPhotoBytes;
     private string adjustedUsageFormatted => FormatBytes(adjustedUsageBytes);
     private string adjustedRemainingFormatted => FormatBytes(availableBytes - adjustedUsageBytes);
@@ -302,8 +314,8 @@
     private void ConfirmSettings()
     {
         // Use calculated limit unless host manually adjusted
-        if (!showAdjust || guestPhotoLimit <= 0)
-            guestPhotoLimit = calculatedLimit;
+        if (!showAdjust || guestPhotoLimit < 5)
+            guestPhotoLimit = Math.Max(5, calculatedLimit);
 
         if (!string.IsNullOrWhiteSpace(GuestToken))
         {
